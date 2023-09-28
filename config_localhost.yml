@@ -1,0 +1,14 @@
+hostname: localhost
+login: admin
+password: adminadmin
+protocol: jsonrpc
+schema: http
+port: 8069
+jobcount: 2
+source:
+  host: db.example.com
+  port: 5432
+  driver: postgres
+  database: dbsource
+  username: dbuser
+  password: dbpassword
