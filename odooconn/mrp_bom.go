@@ -52,11 +52,13 @@ func (o *OdooConn) MRPBom() {
 			sem <- 1
 
 			cid := cids[v.Company]
-			productID := o.GetID("product.template", oarg{oarg{"default_code", "=", v.DefaultCode}})
+			productID, err := o.GetID("product.template", oarg{oarg{"default_code", "=", v.DefaultCode}})
+			o.checkErr(err)
 			// uomID := o.GetID("uom.uom", oarg{oarg{"name", "=", v.UOM}})
 			uomID := uuom[v.UOM]
 
-			r := o.GetID(umdl, oarg{oarg{"product_tmpl_id", "=", productID}, oarg{"company_id", "=", cid}})
+			r, err := o.GetID(umdl, oarg{oarg{"product_tmpl_id", "=", productID}, oarg{"company_id", "=", cid}})
+			o.checkErr(err)
 
 			ur := map[string]interface{}{
 				"product_tmpl_id":       productID,
@@ -69,12 +71,13 @@ func (o *OdooConn) MRPBom() {
 			if v.Kit == 1 {
 				ur["type"] = "phantom"
 			} else {
-				pickType := o.GetID("stock.picking.type", oarg{oarg{"company_id", "=", cid}, oarg{"sequence_code", "=", "MO"}, oarg{"default_location_src_id", "like", v.Code}})
+				pickType, err := o.GetID("stock.picking.type", oarg{oarg{"company_id", "=", cid}, oarg{"sequence_code", "=", "MO"}, oarg{"default_location_src_id", "like", v.Code}})
+				o.checkErr(err)
 				ur["type"] = "normal"
 				ur["picking_type_id"] = pickType
 			}
 
-			o.Log.Infow(mdl, "model", umdl, "record", ur, "r", r)
+			o.Log.Info(mdl, "model", umdl, "record", ur, "r", r)
 
 			o.Record(umdl, r, ur)
 

@@ -145,29 +145,33 @@ func (o *OdooConn) MRPBomOP(c string) {
 			defer wg.Done()
 			sem <- 1
 
-			// o.Log.Infow(umdl, "v", v, "companyID", companyID)
-			productID := o.GetID("product.template", oarg{oarg{"default_code", "=", v.DefaultCode}})
-			bomID := o.GetID("mrp.bom", oarg{oarg{"product_tmpl_id", "=", productID}, oarg{"company_id", "=", companyID}})
+			// o.Log.Info(umdl, "v", v, "companyID", companyID)
+			productID, err := o.GetID("product.template", oarg{oarg{"default_code", "=", v.DefaultCode}})
+			o.checkErr(err)
+			bomID, err := o.GetID("mrp.bom", oarg{oarg{"product_tmpl_id", "=", productID}, oarg{"company_id", "=", companyID}})
+			o.checkErr(err)
 
 			var bb []BOMOP
-			err := o.DB.Select(&bb, bomopstmt, v.DefaultCode)
+			err = o.DB.Select(&bb, bomopstmt, v.DefaultCode)
 			// err := o.DB.Select(&bb, bomopstmt)
 			o.checkErr(err)
-			o.Log.Infow(umdl, "bb", bb)
+			o.Log.Info(umdl, "bb", bb)
 			for _, b := range bb {
-				// o.Log.Infow(umdl, "b", b)
+				// o.Log.Info(umdl, "b", b)
 
-				workcenterID := o.GetID("mrp.workcenter", oarg{
+				workcenterID, err := o.GetID("mrp.workcenter", oarg{
 					oarg{"company_id", "=", companyID},
 					oarg{"name", "=", b.WorkcenterName},
 				})
+				o.checkErr(err)
 
-				r := o.GetID(umdl, oarg{
+				r, err := o.GetID(umdl, oarg{
 					oarg{"name", "=", b.Name},
 					oarg{"workcenter_id", "=", workcenterID},
 					oarg{"bom_id", "=", bomID},
 					oarg{"company_id", "=", companyID},
 				})
+				o.checkErr(err)
 				ur := map[string]interface{}{
 					"name":              b.Name,
 					"workcenter_id":     workcenterID,
@@ -177,7 +181,7 @@ func (o *OdooConn) MRPBomOP(c string) {
 					"duration_per_qty":  b.DurationPerQty,
 				}
 
-				o.Log.Infow(umdl, "record", ur, "r", r)
+				o.Log.Info(umdl, "record", ur, "r", r)
 
 				o.Record(umdl, r, ur)
 			}

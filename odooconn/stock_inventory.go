@@ -15,17 +15,19 @@ func (o *OdooConn) StockInventoryInitial(company string) {
 	umdli := strings.Replace(mdli, "_", ".", -1)
 	fmt.Printf("\n%v StockInventoryInitial %v\n", umdli, company)
 
-	company_id := o.CompanyID(company)
+	company_id, err := o.CompanyID(company)
+	o.checkErr(err)
 	scName := "Initial Count " + company
 
-	invCountID := o.GetID(umdli, oarg{oarg{"name", "=", scName}, oarg{"state", ""}, oarg{"company_id", "=", company_id}})
+	invCountID, err := o.GetID(umdli, oarg{oarg{"name", "=", scName}, oarg{"state", ""}, oarg{"company_id", "=", company_id}})
+	o.checkErr(err)
 	ur := map[string]interface{}{
 		"name":                     scName,
 		"company_id":               company_id,
 		"prefill_counted_quantity": "zero",
 	}
 
-	o.Log.Infow(mdli, "model", umdli, "ur", ur, "r", invCountID)
+	o.Log.Info(mdli, "model", umdli, "ur", ur, "r", invCountID)
 
 	o.Record(umdli, invCountID, ur)
 
@@ -78,7 +80,7 @@ func (o *OdooConn) StockInventoryInitial(company string) {
 		Company     string  `db:"company"`
 	}
 	rr := []Line{}
-	err := o.DB.Select(&rr, stmtGART)
+	err = o.DB.Select(&rr, stmtGART)
 	o.checkErr(err)
 	recs := len(rr)
 	bar := progressbar.Default(int64(recs))
@@ -87,17 +89,21 @@ func (o *OdooConn) StockInventoryInitial(company string) {
 		err := bar.Add(1)
 		o.checkErr(err)
 
-		product := o.SearchRead("product.template", oarg{oarg{"default_code", "=", v.DefaultCode}, oarg{"company_id", "=", company_id}}, 0, 0, []string{"categ_id"})
+		product, err := o.SearchRead("product.template", oarg{oarg{"default_code", "=", v.DefaultCode}, oarg{"company_id", "=", company_id}}, 0, 0, []string{"categ_id"})
+		o.checkErr(err)
 		productID := -1
 		categID := -1
 		if len(product) == 1 {
 			productID = int(product[0]["id"].(float64))
 			categID = int(product[0]["categ_id"].([]interface{})[0].(float64))
 		}
-		location_id := o.GetID("stock.location", oarg{oarg{"complete_name", "=", v.Location}})
-		uomID := o.GetID("uom.uom", oarg{oarg{"name", "=", v.ProductUOM}})
+		location_id, err := o.GetID("stock.location", oarg{oarg{"complete_name", "=", v.Location}})
+		o.checkErr(err)
+		uomID, err := o.GetID("uom.uom", oarg{oarg{"name", "=", v.ProductUOM}})
+		o.checkErr(err)
 
-		r := o.GetID(umdll, oarg{oarg{"inventory_id", "=", invCountID}, oarg{"product_id", "=", productID}, oarg{"location_id", "=", location_id}, oarg{"company_id", "=", company_id}})
+		r, err := o.GetID(umdll, oarg{oarg{"inventory_id", "=", invCountID}, oarg{"product_id", "=", productID}, oarg{"location_id", "=", location_id}, oarg{"company_id", "=", company_id}})
+		o.checkErr(err)
 
 		ur := map[string]interface{}{
 			"inventory_id": invCountID,
@@ -112,7 +118,7 @@ func (o *OdooConn) StockInventoryInitial(company string) {
 		if uomID != -1 {
 			ur["product_uom_id"] = uomID
 		}
-		o.Log.Infow(umdll, "record", ur, "r", r)
+		o.Log.Info(umdll, "record", ur, "r", r)
 
 		// o.Record(umdl, r, ur)
 	}

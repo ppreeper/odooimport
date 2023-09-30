@@ -53,9 +53,12 @@ func (o *OdooConn) ResPartnerBank() {
 			defer wg.Done()
 			sem <- 1
 
-			cid := o.CountryID(v.Country)
-			sid := o.StateID(cid, v.State)
-			r := o.GetID(umdl, oarg{oarg{"name", "=", v.Name}, oarg{"bic", "=", v.BIC}})
+			cid, err := o.CountryID(v.Country)
+			o.checkErr(err)
+			sid, err := o.StateID(cid, v.State)
+			o.checkErr(err)
+			r, err := o.GetID(umdl, oarg{oarg{"name", "=", v.Name}, oarg{"bic", "=", v.BIC}})
+			o.checkErr(err)
 
 			ur := map[string]interface{}{
 				"name":    v.Name,
@@ -65,7 +68,7 @@ func (o *OdooConn) ResPartnerBank() {
 				"country": cid,
 				"bic":     v.BIC,
 			}
-			o.Log.Infow(umdl, "record", ur, "r", r)
+			o.Log.Info(umdl, "record", ur, "r", r)
 
 			o.Record(umdl, r, ur)
 

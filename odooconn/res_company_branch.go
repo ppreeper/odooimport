@@ -42,19 +42,27 @@ func (o *OdooConn) ResCompanyBranch() {
 	err := o.DB.Select(&rr, stmt)
 	o.checkErr(err)
 
-	cids := o.ModelMap("res.company", "name")
-
+	cids, err := o.ModelMap("res.company", "name")
+	o.checkErr(err)
+	
 	recs := len(rr)
 	bar := progressbar.Default(int64(recs))
 	for _, v := range rr {
-		r := o.GetID(umdl, oarg{oarg{"name", "=", v.Pname}})
+		r, err := o.GetID(umdl, oarg{oarg{"name", "=", v.Pname}})
+		o.checkErr(err)
 		cid := cids[v.Company]
-		pid := o.GetID("res.partner", oarg{oarg{"name", "=", v.Pname}, oarg{"parent_id", "=", v.Company}})
-		partner := o.SearchRead("res.partner", oarg{oarg{"name", "=", v.Pname}, oarg{"parent_id", "=", v.Company}}, 0, 0, []string{"name", "parent_id", "phone"})
+		o.checkErr(err)
+		pid, err := o.GetID("res.partner", oarg{oarg{"name", "=", v.Pname}, oarg{"parent_id", "=", v.Company}})
+		o.checkErr(err)
+		partner, err := o.SearchRead("res.partner", oarg{oarg{"name", "=", v.Pname}, oarg{"parent_id", "=", v.Company}}, 0, 0, []string{"name", "parent_id", "phone"})
+		o.checkErr(err)
 
-		defaultDeliveryRouteId := o.GetID("stock.location.route", oarg{oarg{"name", "=", "From " + v.Pprefix}, oarg{"company_id", "=", cid}})
-		accountAnalyticId := o.GetID("account.analytic.account", oarg{oarg{"name", "=", v.Pname}, oarg{"company_id", "=", cid}})
-		soRequestApprovalId := o.GetID("approval.category", oarg{oarg{"name", "=", "Sale Approval - " + v.Pprefix}, oarg{"company_id", "=", cid}})
+		defaultDeliveryRouteId, err := o.GetID("stock.location.route", oarg{oarg{"name", "=", "From " + v.Pprefix}, oarg{"company_id", "=", cid}})
+		o.checkErr(err)
+		accountAnalyticId, err := o.GetID("account.analytic.account", oarg{oarg{"name", "=", v.Pname}, oarg{"company_id", "=", cid}})
+		o.checkErr(err)
+		soRequestApprovalId, err := o.GetID("approval.category", oarg{oarg{"name", "=", "Sale Approval - " + v.Pprefix}, oarg{"company_id", "=", cid}})
+		o.checkErr(err)
 
 		// TODO: needs default incoming routes
 
@@ -78,7 +86,7 @@ func (o *OdooConn) ResCompanyBranch() {
 			ur["so_request_approval_id"] = soRequestApprovalId
 		}
 
-		o.Log.Debugw(umdl, "r", r, "ur", ur)
+		o.Log.Debug(umdl, "r", r, "ur", ur)
 		o.Record(umdl, r, ur)
 
 		bar.Add(1)

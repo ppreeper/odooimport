@@ -86,12 +86,16 @@ func (o *OdooConn) StockPutawayRule() {
 			sem <- 1
 
 			cid := cids[v.Company]
-			pTmplID := o.GetID("product.template", oarg{oarg{"default_code", "=", v.DefaultCode}})
-			pID := o.GetID("product.product", oarg{oarg{"product_tmpl_id", "=", pTmplID}})
-			locInID := o.GetID("stock.location", oarg{oarg{"complete_name", "=", v.Location}})
-			locOutID := o.GetID("stock.location", oarg{oarg{"complete_name", "=", v.SBin}})
+			pTmplID, err := o.GetID("product.template", oarg{oarg{"default_code", "=", v.DefaultCode}})
+			o.checkErr(err)
+			pID, err := o.GetID("product.product", oarg{oarg{"product_tmpl_id", "=", pTmplID}})
+			o.checkErr(err)
+			locInID, err := o.GetID("stock.location", oarg{oarg{"complete_name", "=", v.Location}})
+			o.checkErr(err)
+			locOutID, err := o.GetID("stock.location", oarg{oarg{"complete_name", "=", v.SBin}})
+			o.checkErr(err)
 
-			r := o.GetID(umdl,
+			r, err := o.GetID(umdl,
 				oarg{
 					oarg{"product_id", "=", pID},
 					oarg{"location_in_id", "=", locInID},
@@ -99,6 +103,7 @@ func (o *OdooConn) StockPutawayRule() {
 					oarg{"company_id", "=", cid},
 				},
 			)
+			o.checkErr(err)
 
 			ur := map[string]interface{}{
 				"company_id":      cid,
@@ -107,7 +112,7 @@ func (o *OdooConn) StockPutawayRule() {
 				"product_id":      pID,
 			}
 
-			o.Log.Infow(mdl, "record", ur, "r", r, "v", v)
+			o.Log.Info(mdl, "record", ur, "r", r, "v", v)
 
 			o.Record(umdl, r, ur)
 

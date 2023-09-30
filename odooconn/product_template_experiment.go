@@ -2,7 +2,6 @@ package odooconn
 
 import (
 	"fmt"
-	"math"
 	"strings"
 	"sync"
 
@@ -29,7 +28,8 @@ func (o *OdooConn) ProductTemplateUnlink2() {
 	err := o.DB.Select(&dbrecs, stmt)
 	o.checkErr(err)
 
-	odoorecs := o.SearchRead(umdl, oarg{}, 0, 0, []string{"default_code"})
+	odoorecs, err := o.SearchRead(umdl, oarg{}, 0, 0, []string{"default_code"})
+	o.checkErr(err)
 	fmt.Println("products:", len(odoorecs))
 
 	bar := progressbar.Default(int64(len(odoorecs)))
@@ -64,7 +64,8 @@ func (o *OdooConn) ProductTemplateUnlink3() {
 
 	fmt.Println("dbrecs:", len(dbrecs))
 
-	odoorecs := o.SearchRead(umdl, oarg{}, 0, 0, []string{"default_code"})
+	odoorecs, err := o.SearchRead(umdl, oarg{}, 0, 0, []string{"default_code"})
+	o.checkErr(err)
 	fmt.Println("odoorecs:", len(odoorecs))
 
 	odooList := make(map[string]int)
@@ -137,8 +138,10 @@ func (o *OdooConn) ProductTemplate2() {
 	err := o.DB.Select(&rr, stmt)
 	o.checkErr(err)
 
-	taxSell := o.GetID("account.tax", oarg{oarg{"name", "=", "GST for sales - 5%"}})
-	taxPurchase := o.GetID("account.tax", oarg{oarg{"name", "=", "GST for purchases - 5%"}})
+	taxSell, err := o.GetID("account.tax", oarg{oarg{"name", "=", "GST for sales - 5%"}})
+	o.checkErr(err)
+	taxPurchase, err := o.GetID("account.tax", oarg{oarg{"name", "=", "GST for purchases - 5%"}})
+	o.checkErr(err)
 
 	pgs := o.ProductCategoryMap()
 	// uom := o.UomMapper()
@@ -147,7 +150,8 @@ func (o *OdooConn) ProductTemplate2() {
 	recs := len(rr)
 	bar := progressbar.Default(int64(recs))
 	for _, v := range rr {
-		r := o.GetID(umdl, oarg{oarg{"default_code", "=", v.DefaultCode}})
+		r, err := o.GetID(umdl, oarg{oarg{"default_code", "=", v.DefaultCode}})
+		o.checkErr(err)
 
 		categID := -1
 		if v.Matgrp != "" {
@@ -172,7 +176,7 @@ func (o *OdooConn) ProductTemplate2() {
 			ur["categ_id"] = categID
 		}
 
-		o.Log.Infow(umdl, "ur", ur, "r", r)
+		o.Log.Info(umdl, "ur", ur, "r", r)
 
 		o.Record(umdl, r, ur)
 
@@ -217,8 +221,10 @@ func (o *OdooConn) ProductTemplate3() {
 	err := o.DB.Select(&rr, stmt)
 	o.checkErr(err)
 
-	taxSell := o.GetID("account.tax", oarg{oarg{"name", "=", "GST for sales - 5%"}})
-	taxPurchase := o.GetID("account.tax", oarg{oarg{"name", "=", "GST for purchases - 5%"}})
+	taxSell, err := o.GetID("account.tax", oarg{oarg{"name", "=", "GST for sales - 5%"}})
+	o.checkErr(err)
+	taxPurchase, err := o.GetID("account.tax", oarg{oarg{"name", "=", "GST for purchases - 5%"}})
+	o.checkErr(err)
 
 	pgs := o.ProductCategoryMap()
 	// uom := o.UomMapper()
@@ -235,7 +241,8 @@ func (o *OdooConn) ProductTemplate3() {
 			defer wg.Done()
 			sem <- 1
 
-			r := o.GetID(umdl, oarg{oarg{"default_code", "=", v.DefaultCode}})
+			r, err := o.GetID(umdl, oarg{oarg{"default_code", "=", v.DefaultCode}})
+			o.checkErr(err)
 
 			categID := -1
 			if v.Matgrp != "" {
@@ -260,7 +267,7 @@ func (o *OdooConn) ProductTemplate3() {
 				ur["categ_id"] = categID
 			}
 
-			o.Log.Infow(umdl, "ur", ur, "r", r)
+			o.Log.Info(umdl, "ur", ur, "r", r)
 
 			o.Record(umdl, r, ur)
 
@@ -302,7 +309,8 @@ func (o *OdooConn) ProductTemplate4() {
 	err := o.DB.Select(&dbrecs, stmt)
 	o.checkErr(err)
 
-	odoorecs := o.SearchRead(umdl, oarg{}, 0, 0, []string{"default_code"})
+	odoorecs, err := o.SearchRead(umdl, oarg{}, 0, 0, []string{"default_code"})
+	o.checkErr(err)
 
 	odooList := make(map[string]int)
 	for _, r := range odoorecs {
@@ -375,10 +383,10 @@ func (o *OdooConn) ProductTemplate4() {
 				end = start + i
 				// fmt.Println("flush and clear", start, end)
 				if len(recs) > 0 {
-					// o.Log.Infow(umdl, "start", start, "end", end, "diff", start-end)
+					// o.Log.Info(umdl, "start", start, "end", end, "diff", start-end)
 					out, err := o.Load(umdl, header, recs)
 					if err != nil {
-						o.Log.Errorw(umdl, "out", out, "err", err)
+						o.Log.Error(umdl, "out", out, "err", err)
 					}
 					bar.Add(end - start)
 				}
@@ -391,47 +399,6 @@ func (o *OdooConn) ProductTemplate4() {
 
 	// update records
 	fmt.Println("update records", len(uList))
-	// taxSell := o.GetID("account.tax", oarg{oarg{"name", "=", "GST for sales - 5%"}})
-	// taxPurchase := o.GetID("account.tax", oarg{oarg{"name", "=", "GST for purchases - 5%"}})
-
-	// pgs := o.ProductCategoryMap()
-	// uom := o.UomMapper()
-
-	// bar = progressbar.Default(int64(len(uList)))
-	// for _, dr := range dbrecs {
-	// 	if _, ok := uList[dr.DefaultCode]; ok {
-	// 		r := uList[dr.DefaultCode]
-
-	// 		categID := -1
-	// 		if dr.Matgrp != "" {
-	// 			categID = pgs[dr.Matgrp]
-	// 		}
-
-	// 		var ur = map[string]interface{}{
-	// 			"name":                  dr.Name,
-	// 			"default_code":          dr.DefaultCode,
-	// 			"barcode":               dr.DefaultCode,
-	// 			"type":                  dr.DetailedType,
-	// 			"list_price":            dr.ListPrice,
-	// 			"standard_price":        dr.StandardPrice,
-	// 			"description_sale":      dr.DescriptionSale,
-	// 			"description_pickingin": dr.DescriptionPickingin,
-	// 			"description_purchase":  dr.DescriptionPurchase,
-	// 			"taxes_id":              []int{taxSell},
-	// 			"supplier_taxes_id":     []int{taxPurchase},
-	// 		}
-
-	// 		if categID != -1 {
-	// 			ur["categ_id"] = categID
-	// 		}
-
-	// 		o.Log.Infow(umdl, "ur", ur, "r", r)
-
-	// 		o.Record(umdl, r, ur)
-
-	// 		bar.Add(1)
-	// 	}
-	// }
 }
 
 func (o *OdooConn) ProductTemplate5() {
@@ -466,7 +433,8 @@ func (o *OdooConn) ProductTemplate5() {
 	err := o.DB.Select(&dbrecs, stmt)
 	o.checkErr(err)
 
-	odoorecs := o.SearchRead(umdl, oarg{}, 0, 0, []string{"default_code"})
+	odoorecs, err := o.SearchRead(umdl, oarg{}, 0, 0, []string{"default_code"})
+	o.checkErr(err)
 
 	odooList := make(map[string]int)
 	for _, r := range odoorecs {
@@ -507,13 +475,15 @@ func (o *OdooConn) ProductTemplate5() {
 		"taxes_id",
 		"supplier_taxes_id",
 	}
-	o.Log.Infow(umdl, "header", header)
+	o.Log.Info(umdl, "header", header)
 
 	// var recs = make([]interface{}, 0, o.BatchSize)
 	// fmt.Println("recs", len(recs), cap(recs), recs)
 
-	taxSell := o.GetID("account.tax", oarg{oarg{"name", "=", "GST for sales - 5%"}})
-	taxPurchase := o.GetID("account.tax", oarg{oarg{"name", "=", "GST for purchases - 5%"}})
+	taxSell, err := o.GetID("account.tax", oarg{oarg{"name", "=", "GST for sales - 5%"}})
+	o.checkErr(err)
+	taxPurchase, err := o.GetID("account.tax", oarg{oarg{"name", "=", "GST for purchases - 5%"}})
+	o.checkErr(err)
 
 	pgs := o.ProductCategoryMap()
 	// uom := o.UomMapper()
@@ -557,7 +527,7 @@ func (o *OdooConn) ProductTemplate5() {
 
 				out, err := o.Create(umdl, ur)
 				if err != nil {
-					o.Log.Errorw(umdl, "out", out, "err", err)
+					o.Log.Error(umdl, "out", out, "err", err)
 				}
 
 				<-sem
@@ -603,11 +573,11 @@ func (o *OdooConn) ProductTemplate5() {
 					ur["categ_id"] = categID
 				}
 
-				o.Log.Infow(umdl, "ur", ur, "r", r)
+				o.Log.Info(umdl, "ur", ur, "r", r)
 
 				out, err := o.Update(umdl, r, ur)
 				if err != nil {
-					o.Log.Errorw(umdl, "out", out, "err", err)
+					o.Log.Error(umdl, "out", out, "err", err)
 				}
 
 				<-sem
@@ -649,7 +619,8 @@ func (o *OdooConn) ProductTemplate6() {
 	err := o.DB.Select(&dbrecs, stmt)
 	o.checkErr(err)
 
-	odoorecs := o.SearchRead(umdl, oarg{}, 0, 0, []string{"default_code"})
+	odoorecs, err := o.SearchRead(umdl, oarg{}, 0, 0, []string{"default_code"})
+	o.checkErr(err)
 
 	odooList := make(map[string]int)
 	for _, r := range odoorecs {
@@ -670,8 +641,10 @@ func (o *OdooConn) ProductTemplate6() {
 		}
 	}
 
-	taxSell := o.GetID("account.tax", oarg{oarg{"name", "=", "GST for sales - 5%"}})
-	taxPurchase := o.GetID("account.tax", oarg{oarg{"name", "=", "GST for purchases - 5%"}})
+	taxSell, err := o.GetID("account.tax", oarg{oarg{"name", "=", "GST for sales - 5%"}})
+	o.checkErr(err)
+	taxPurchase, err := o.GetID("account.tax", oarg{oarg{"name", "=", "GST for purchases - 5%"}})
+	o.checkErr(err)
 
 	pgs := o.ProductCategoryMap()
 	// uom := o.UomMapper()
@@ -731,14 +704,6 @@ func (o *OdooConn) ProductTemplate6() {
 		out2 <- rec
 	}()
 
-	// for {
-	// 	select {
-	// 	case msg := <-out1:
-	// 		fmt.Println("out1", msg)
-	// 	case msg := <-out2:
-	// 		fmt.Println("out2", msg)
-	// 	}
-	// }
 	li := 0
 	for msg := range out1 {
 		li++
@@ -748,74 +713,4 @@ func (o *OdooConn) ProductTemplate6() {
 	for msg := range out2 {
 		fmt.Println("out2", msg)
 	}
-
-	// update records
-
-	// bar = progressbar.Default(int64(len(uList)))
-	// for _, dr := range dbrecs {
-	// 	if _, ok := uList[dr.DefaultCode]; ok {
-	// 		r := uList[dr.DefaultCode]
-
-	// 		categID := -1
-	// 		if dr.Matgrp != "" {
-	// 			categID = pgs[dr.Matgrp]
-	// 		}
-
-	// 		var ur = map[string]interface{}{
-	// 			"name":                  dr.Name,
-	// 			"default_code":          dr.DefaultCode,
-	// 			"barcode":               dr.DefaultCode,
-	// 			"type":                  dr.DetailedType,
-	// 			"list_price":            dr.ListPrice,
-	// 			"standard_price":        dr.StandardPrice,
-	// 			"description_sale":      dr.DescriptionSale,
-	// 			"description_pickingin": dr.DescriptionPickingin,
-	// 			"description_purchase":  dr.DescriptionPurchase,
-	// 			"taxes_id":              []int{taxSell},
-	// 			"supplier_taxes_id":     []int{taxPurchase},
-	// 		}
-
-	// 		if categID != -1 {
-	// 			ur["categ_id"] = categID
-	// 		}
-
-	// 		o.Log.Infow(umdl, "ur", ur, "r", r)
-
-	// 		o.Record(umdl, r, ur)
-
-	// 		bar.Add(1)
-	// 	}
-	// }
 }
-
-// ProductTemplate function
-
-func pager(batch, total int) {
-	batchTotal := math.Ceil(float64(total) / float64(batch))
-	fmt.Println("batchTotal", batchTotal)
-}
-
-// Create record
-// func (o *Odoo) Load(model string, header []string, records []interface{}) (out int, err error) {
-// 	v, err := o.Call("object", "execute", o.Database, o.uid, o.Password, model, "load", header, records)
-// 	if err != nil {
-// 		return -1, err
-// 	}
-// 	// fmt.Printf("\n\n Create: %v", v)
-// 	switch v := v.(type) {
-// 	case float64:
-// 		out = int(v)
-// 	case interface{}:
-// 		// ids := v.(map[string]interface{})["ids"].([]interface{})
-// 		// message := v.(map[string]interface{})["message"].([]interface{})
-// 		// nextrow := v.(map[string]interface{})["nextrow"].(int)
-// 		// if len(message) != 0 {
-// 		// 	err = fmt.Errorf("create record error model: %s message: %s record: %v", model, message, ids)
-// 		// }
-// 		// fmt.Println(ids, message)
-// 		out = 0
-// 	default:
-// 		out = -1
-// 	}
-// 	return
-// }

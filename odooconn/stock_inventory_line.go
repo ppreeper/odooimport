@@ -19,5 +19,5 @@ func (o *OdooConn) StockInventoryLine() {
 	o.checkErr(err)
 	recs := len(rr)
 
-	o.Log.Infow(mdl, "model", umdl, "record", recs)
+	o.Log.Info(mdl, "model", umdl, "record", recs)
 }

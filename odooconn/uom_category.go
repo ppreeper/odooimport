@@ -21,11 +21,12 @@ func (o *OdooConn) UomCategory() {
 	for _, v := range uomCat {
 		err := bar.Add(1)
 		o.checkErr(err)
-		r := o.GetID(umdl, oarg{oarg{"name", "=", v.Name}})
+		r, err := o.GetID(umdl, oarg{oarg{"name", "=", v.Name}})
+		o.checkErr(err)
 		ur := map[string]interface{}{
 			"name": v.Name,
 		}
-		o.Log.Infow(mdl, "model", umdl, "record", ur, "r", r)
+		o.Log.Info(mdl, "model", umdl, "record", ur, "r", r)
 
 		o.Record(umdl, r, ur)
 	}

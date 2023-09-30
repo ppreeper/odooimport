@@ -13,7 +13,9 @@ func (o *OdooConn) IrUiMenuSort() {
 	fmt.Printf("\n%v IrUiMenuSort\n", umdl)
 
 	menuList := []string{}
-	mm := o.SearchRead(umdl, oarg{oarg{"parent_id", "=", false}}, 0, 0, []string{"name", "sequence"})
+	mm, err := o.SearchRead(umdl, oarg{oarg{"parent_id", "=", false}}, 0, 0, []string{"name", "sequence"})
+	o.checkErr(err)
+
 	for _, m := range mm {
 		menuList = append(menuList, m["name"].(string))
 	}
@@ -30,7 +32,7 @@ func (o *OdooConn) IrUiMenuSort() {
 		ur := map[string]interface{}{
 			"sequence": k + 1,
 		}
-		o.Log.Infow(mdl, "model", umdl, "record", ur, "r", r)
+		o.Log.Info(mdl, "model", umdl, "record", ur, "r", r)
 
 		o.Record(umdl, r, ur)
 	}

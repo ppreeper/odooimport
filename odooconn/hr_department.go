@@ -52,13 +52,14 @@ func (o *OdooConn) HRDepartment() {
 			sem <- 1
 
 			company_id := cids[u.Company]
-			r := o.GetID(umdl, oarg{oarg{"name", "=", u.Department}, oarg{"company_id", "=", company_id}})
+			r, err := o.GetID(umdl, oarg{oarg{"name", "=", u.Department}, oarg{"company_id", "=", company_id}})
+			o.checkErr(err)
 
 			ur := map[string]interface{}{
 				"name":       u.Department,
 				"company_id": company_id,
 			}
-			o.Log.Infow(umdl, "u", u, "record", ur, "r", r)
+			o.Log.Info(umdl, "u", u, "record", ur, "r", r)
 
 			o.Record(umdl, r, ur)
 

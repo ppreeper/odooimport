@@ -25,7 +25,8 @@ func (o *OdooConn) StockPickingTypeUnlink() {
 	err := o.DB.Select(&dbrecs, stmt)
 	o.checkErr(err)
 
-	odoorecs := o.SearchRead(umdl, oarg{"active", "=", true}, 0, 0, []string{"warehouse_id", "company_id", "active"})
+	odoorecs, err := o.SearchRead(umdl, oarg{"active", "=", true}, 0, 0, []string{"warehouse_id", "company_id", "active"})
+	o.checkErr(err)
 	fmt.Println("odoorecs", len(odoorecs))
 	type ORec struct {
 		Row       int
@@ -73,7 +74,8 @@ func (o *OdooConn) StockPickingTypeUnlink() {
 		orecs = append(orecs, ORec{Row: rid, Warehouse: warehouse_id, Company: company_id, Active: active})
 	}
 
-	odoorecs = o.SearchRead(umdl, oarg{"active", "=", false}, 0, 0, []string{"warehouse_id", "company_id", "active"})
+	odoorecs, err = o.SearchRead(umdl, oarg{"active", "=", false}, 0, 0, []string{"warehouse_id", "company_id", "active"})
+	o.checkErr(err)
 	fmt.Println("odoorecs", len(odoorecs))
 	for _, v := range odoorecs {
 		rid := int(v["id"].(float64))
@@ -161,7 +163,8 @@ func (o *OdooConn) StockPickingType() {
 
 	fmt.Println("dbrecs", len(dbrecs))
 
-	companyIDs := o.ModelMap("res.company", "name")
+	companyIDs, err := o.ModelMap("res.company", "name")
+	o.checkErr(err)
 
 	// tasker
 	recs := len(dbrecs)
@@ -176,16 +179,23 @@ func (o *OdooConn) StockPickingType() {
 			sem <- 1
 
 			cid := companyIDs[v.CompanyId]
-			r := o.GetID(umdl, oarg{oarg{"name", "=", v.Name}, oarg{"company_id", "=", cid}})
-			sequenceID := o.GetID("ir.sequence", oarg{oarg{"name", "like", v.WarehouseId}, oarg{"company_id", "=", cid}, oarg{"prefix", "like", v.SequenceCode}})
+			r, err := o.GetID(umdl, oarg{oarg{"name", "=", v.Name}, oarg{"company_id", "=", cid}})
+			o.checkErr(err)
+			sequenceID, err := o.GetID("ir.sequence", oarg{oarg{"name", "like", v.WarehouseId}, oarg{"company_id", "=", cid}, oarg{"prefix", "like", v.SequenceCode}})
+			o.checkErr(err)
 			if v.SequenceCode == "DS" {
-				sequenceID = o.GetID("ir.sequence", oarg{oarg{"name", "like", v.SequenceId}, oarg{"company_id", "=", cid}, oarg{"prefix", "like", v.SequenceCode}})
+				sequenceID, err = o.GetID("ir.sequence", oarg{oarg{"name", "like", v.SequenceId}, oarg{"company_id", "=", cid}, oarg{"prefix", "like", v.SequenceCode}})
+				o.checkErr(err)
 			}
-			warehouseID := o.GetID("stock.warehouse", oarg{oarg{"name", "=", v.WarehouseId}, oarg{"company_id", "=", cid}})
-			companyBranchId := o.GetID("res.company.branch", oarg{oarg{"name", "=", v.WarehouseId}, oarg{"company_id", "=", cid}})
+			warehouseID, err := o.GetID("stock.warehouse", oarg{oarg{"name", "=", v.WarehouseId}, oarg{"company_id", "=", cid}})
+			o.checkErr(err)
+			companyBranchId, err := o.GetID("res.company.branch", oarg{oarg{"name", "=", v.WarehouseId}, oarg{"company_id", "=", cid}})
+			o.checkErr(err)
 
-			defaultLocationSrcId := o.GetID("stock.location", oarg{oarg{"complete_name", "=", v.DefaultLocationSrcId}, oarg{"company_id", "=", cid}})
-			defaultLocationDestId := o.GetID("stock.location", oarg{oarg{"complete_name", "=", v.DefaultLocationDestId}, oarg{"company_id", "=", cid}})
+			defaultLocationSrcId, err := o.GetID("stock.location", oarg{oarg{"complete_name", "=", v.DefaultLocationSrcId}, oarg{"company_id", "=", cid}})
+			o.checkErr(err)
+			defaultLocationDestId, err := o.GetID("stock.location", oarg{oarg{"complete_name", "=", v.DefaultLocationDestId}, oarg{"company_id", "=", cid}})
+			o.checkErr(err)
 
 			o.Log.Error(v.DefaultLocationSrcId, defaultLocationSrcId, v.DefaultLocationDestId, defaultLocationDestId)
 
@@ -212,7 +222,7 @@ func (o *OdooConn) StockPickingType() {
 				ur["company_branch_id"] = companyBranchId
 			}
 
-			o.Log.Debugw(umdl, "r", r, "ur", ur)
+			o.Log.Debug(umdl, "r", r, "ur", ur)
 
 			o.Record(umdl, r, ur)
 

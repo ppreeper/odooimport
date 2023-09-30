@@ -91,14 +91,16 @@ func (o *OdooConn) StockLocation() {
 		o.checkErr(err)
 		cid := companyIDs[v.Company]
 		name := v.Location
-		pid := o.GetID(umdl, oarg{oarg{"complete_name", "=", v.Warehouse}, oarg{"company_id", "=", cid}})
-		r := o.GetID(umdl, oarg{oarg{"name", "=", v.Location}, oarg{"location_id", "=", pid}, oarg{"company_id", "=", cid}})
+		pid, err := o.GetID(umdl, oarg{oarg{"complete_name", "=", v.Warehouse}, oarg{"company_id", "=", cid}})
+		o.checkErr(err)
+		r, err := o.GetID(umdl, oarg{oarg{"name", "=", v.Location}, oarg{"location_id", "=", pid}, oarg{"company_id", "=", cid}})
+		o.checkErr(err)
 		ur := map[string]interface{}{
 			"name":        name,
 			"location_id": pid,
 			"company_id":  cid,
 		}
-		o.Log.Infow(mdl, "record", ur, "r", r, "v", v)
+		o.Log.Info(mdl, "record", ur, "r", r, "v", v)
 	}
 
 	stmt = `
@@ -193,8 +195,10 @@ func (o *OdooConn) StockLocation() {
 
 			cid := companyIDs[v.Company]
 			name := v.SBin
-			pid := o.GetID(umdl, oarg{oarg{"complete_name", "=", v.Location}, oarg{"company_id", "=", cid}})
-			r := o.GetID(umdl, oarg{oarg{"name", "=", v.SBin}, oarg{"location_id", "=", pid}, oarg{"company_id", "=", cid}})
+			pid, err := o.GetID(umdl, oarg{oarg{"complete_name", "=", v.Location}, oarg{"company_id", "=", cid}})
+			o.checkErr(err)
+			r, err := o.GetID(umdl, oarg{oarg{"name", "=", v.SBin}, oarg{"location_id", "=", pid}, oarg{"company_id", "=", cid}})
+			o.checkErr(err)
 
 			ur := map[string]interface{}{
 				"name":        name,
@@ -202,7 +206,7 @@ func (o *OdooConn) StockLocation() {
 				"company_id":  cid,
 			}
 
-			o.Log.Infow(mdl, "record", ur, "r", r, "v", v)
+			o.Log.Info(mdl, "record", ur, "r", r, "v", v)
 
 			o.Record(umdl, r, ur)
 
@@ -215,7 +219,8 @@ func (o *OdooConn) StockLocation() {
 func (o *OdooConn) StockLocationMap() map[string]int {
 	mdl := "stock_location"
 	umdl := strings.Replace(mdl, "_", ".", -1)
-	cc := o.SearchRead(umdl, oarg{}, 0, 0, []string{"name"})
+	cc, err := o.SearchRead(umdl, oarg{}, 0, 0, []string{"name"})
+	o.checkErr(err)
 	cids := map[string]int{}
 	for _, c := range cc {
 		cids[c["complete_name"].(string)] = int(c["id"].(float64))

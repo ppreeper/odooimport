@@ -122,8 +122,9 @@ func (o *OdooConn) StockReorderPoint() {
 	bar := progressbar.Default(int64(recs))
 
 	companyIDs := o.ResCompanyMap()
-	routeID := o.GetID("stock.location.route", oarg{oarg{"name", "=", "Buy"}})
-
+	routeID, err := o.GetID("stock.location.route", oarg{oarg{"name", "=", "Buy"}})
+	o.checkErr(err)
+	
 	wg.Add(recs)
 	for _, v := range rr {
 		go func(sem chan int, wg *sync.WaitGroup, bar *progressbar.ProgressBar, v Reorderpoint) {
@@ -133,17 +134,22 @@ func (o *OdooConn) StockReorderPoint() {
 
 			companyID := companyIDs[v.Company]
 
-			warehouseID := o.GetID("stock.warehouse", oarg{oarg{"name", "=", v.Warehouse}, oarg{"company_id", "=", companyID}})
-			locationID := o.GetID("stock.location", oarg{oarg{"complete_name", "=", v.Location}, oarg{"company_id", "=", companyID}})
-			productTmplID := o.GetID("product.template", oarg{oarg{"default_code", "=", v.DefaultCode}})
-			productID := o.GetID("product.product", oarg{oarg{"product_tmpl_id", "=", productTmplID}})
+			warehouseID, err := o.GetID("stock.warehouse", oarg{oarg{"name", "=", v.Warehouse}, oarg{"company_id", "=", companyID}})
+			o.checkErr(err)
+			locationID, err := o.GetID("stock.location", oarg{oarg{"complete_name", "=", v.Location}, oarg{"company_id", "=", companyID}})
+			o.checkErr(err)
+			productTmplID, err := o.GetID("product.template", oarg{oarg{"default_code", "=", v.DefaultCode}})
+			o.checkErr(err)
+			productID, err := o.GetID("product.product", oarg{oarg{"product_tmpl_id", "=", productTmplID}})
+			o.checkErr(err)
 
-			r := o.GetID(umdl, oarg{
+			r, err := o.GetID(umdl, oarg{
 				oarg{"warehouse_id", "=", warehouseID},
 				oarg{"location_id", "=", locationID},
 				oarg{"product_id", "=", productID},
 				oarg{"company_id", "=", companyID},
 			})
+			o.checkErr(err)
 
 			ur := map[string]interface{}{
 				"product_id":      productID,
@@ -156,7 +162,7 @@ func (o *OdooConn) StockReorderPoint() {
 				"qty_multiple":    v.LotSize,
 				"trigger":         "manual",
 			}
-			o.Log.Infow(umdl, "record", ur, "r", r)
+			o.Log.Info(umdl, "record", ur, "r", r)
 
 			o.Record(umdl, r, ur)
 
@@ -187,6 +193,6 @@ func (o *OdooConn) StockWarehouseOrderpoint() {
 	err := o.DB.Select(&rr, stmt)
 	o.checkErr(err)
 	recs := len(rr)
-	o.Log.Infow(mdl, "model", umdl, "record", recs)
+	o.Log.Info(mdl, "model", umdl, "record", recs)
 	// id   |         name         | trigger | active | snoozed_until | warehouse_id | location_id | product_id | product_category_id | product_min_qty | product_max_qty | qty_multiple | group_id | company_id | route_id | qty_to_order | create_uid |        create_date         | write_uid |         write_date         | bom_id | supplier_id
 }

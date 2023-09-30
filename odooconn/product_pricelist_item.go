@@ -58,10 +58,14 @@ func (o *OdooConn) PricelistPricegroupMatGrpDiscounts() {
 			defer wg.Done()
 			sem <- 1
 
-			curid := o.GetID("res.currency", oarg{oarg{"name", "=", p.Currency}})
-			listID := o.GetID("product.pricelist", oarg{oarg{"name", "=", p.Name}, oarg{"currency_id", "=", curid}})
-			categID := o.GetID("product.category", oarg{oarg{"name", "like", p.Matkl}})
-			r := o.GetID(umdl, oarg{oarg{"categ_id", "=", categID}, oarg{"pricelist_id", "=", listID}, oarg{"currency_id", "=", curid}})
+			curid, err := o.GetID("res.currency", oarg{oarg{"name", "=", p.Currency}})
+			o.checkErr(err)
+			listID, err := o.GetID("product.pricelist", oarg{oarg{"name", "=", p.Name}, oarg{"currency_id", "=", curid}})
+			o.checkErr(err)
+			categID, err := o.GetID("product.category", oarg{oarg{"name", "like", p.Matkl}})
+			o.checkErr(err)
+			r, err := o.GetID(umdl, oarg{oarg{"categ_id", "=", categID}, oarg{"pricelist_id", "=", listID}, oarg{"currency_id", "=", curid}})
+			o.checkErr(err)
 			ur := map[string]interface{}{
 				"categ_id":      categID,
 				"applied_on":    "2_product_category",
@@ -72,9 +76,9 @@ func (o *OdooConn) PricelistPricegroupMatGrpDiscounts() {
 				"date_start":    p.DateStart,
 				"date_end":      p.DateEnd,
 			}
-			// o.Log.Infow(mdl, "model", umdl, "record", ur, "r", r)
+			// o.Log.Info(mdl, "model", umdl, "record", ur, "r", r)
 
-			o.Log.Infow(umdl, "ur", ur, "rid", r)
+			o.Log.Info(umdl, "ur", ur, "rid", r)
 
 			o.Record(umdl, r, ur)
 
@@ -200,10 +204,14 @@ func (o *OdooConn) PricelistCustomerDefault() {
 			defer wg.Done()
 			sem <- 1
 
-			curid := o.GetID("res.currency", oarg{oarg{"name", "=", p.Currency}})
-			listID := o.GetID("product.pricelist", oarg{oarg{"name", "=", p.Name}, oarg{"currency_id", "=", curid}})
-			defaultListID := o.GetID("product.pricelist", oarg{oarg{"name", "=", p.DefaultPricelist}, oarg{"currency_id", "=", curid}})
-			r := o.GetID(umdl, oarg{oarg{"base_pricelist_id", "=", defaultListID}, oarg{"pricelist_id", "=", listID}, oarg{"currency_id", "=", curid}})
+			curid, err := o.GetID("res.currency", oarg{oarg{"name", "=", p.Currency}})
+			o.checkErr(err)
+			listID, err := o.GetID("product.pricelist", oarg{oarg{"name", "=", p.Name}, oarg{"currency_id", "=", curid}})
+			o.checkErr(err)
+			defaultListID, err := o.GetID("product.pricelist", oarg{oarg{"name", "=", p.DefaultPricelist}, oarg{"currency_id", "=", curid}})
+			o.checkErr(err)
+			r, err := o.GetID(umdl, oarg{oarg{"base_pricelist_id", "=", defaultListID}, oarg{"pricelist_id", "=", listID}, oarg{"currency_id", "=", curid}})
+			o.checkErr(err)
 
 			ur := map[string]interface{}{
 				"applied_on":        "3_global",
@@ -212,7 +220,7 @@ func (o *OdooConn) PricelistCustomerDefault() {
 				"pricelist_id":      listID,
 				"compute_price":     "formula",
 			}
-			o.Log.Infow(umdl, "ur", ur, "r", r)
+			o.Log.Info(umdl, "ur", ur, "r", r)
 
 			o.Record(umdl, r, ur)
 
@@ -278,11 +286,15 @@ func (o *OdooConn) PricelistCustomerMatGrpDiscounts() {
 			defer wg.Done()
 			sem <- 1
 
-			curid := o.GetID("res.currency", oarg{oarg{"name", "=", p.Currency}})
-			listID := o.GetID("product.pricelist", oarg{oarg{"name", "=", p.Name}, oarg{"currency_id", "=", curid}})
-			categID := o.GetID("product.category", oarg{oarg{"name", "like", p.Matkl}})
-			r := o.GetID(umdl, oarg{oarg{"categ_id", "=", categID}, oarg{"pricelist_id", "=", listID}, oarg{"currency_id", "=", curid}})
-			o.Log.Infow("", "name", p.Name, "matkl", p.Matkl, "discount", p.Discount)
+			curid, err := o.GetID("res.currency", oarg{oarg{"name", "=", p.Currency}})
+			o.checkErr(err)
+			listID, err := o.GetID("product.pricelist", oarg{oarg{"name", "=", p.Name}, oarg{"currency_id", "=", curid}})
+			o.checkErr(err)
+			categID, err := o.GetID("product.category", oarg{oarg{"name", "like", p.Matkl}})
+			o.checkErr(err)
+			r, err := o.GetID(umdl, oarg{oarg{"categ_id", "=", categID}, oarg{"pricelist_id", "=", listID}, oarg{"currency_id", "=", curid}})
+			o.checkErr(err)
+			o.Log.Info("", "name", p.Name, "matkl", p.Matkl, "discount", p.Discount)
 			ur := map[string]interface{}{
 				"categ_id":      categID,
 				"applied_on":    "2_product_category",
@@ -293,8 +305,8 @@ func (o *OdooConn) PricelistCustomerMatGrpDiscounts() {
 				"date_start":    p.DateStart,
 				"date_end":      p.DateEnd,
 			}
-			// o.Log.Infow(mdl, "model", umdl, "record", ur, "r", r)
-			o.Log.Infow(umdl, "ur", ur, "rid", r)
+			// o.Log.Info(mdl, "model", umdl, "record", ur, "r", r)
+			o.Log.Info(umdl, "ur", ur, "rid", r)
 
 			o.Record(umdl, r, ur)
 
@@ -362,10 +374,14 @@ func (o *OdooConn) PricelistCustomerNetoutItems() {
 			defer wg.Done()
 			sem <- 1
 
-			curID := o.GetID("res.currency", oarg{oarg{"name", "=", p.Currency}})
-			listID := o.GetID("product.pricelist", oarg{oarg{"name", "=", p.Name}, oarg{"currency_id", "=", curID}})
-			pid := o.GetID("product.template", oarg{oarg{"default_code", "=", p.Matnr}})
-			r := o.GetID(umdl, oarg{oarg{"product_tmpl_id", "=", pid}, oarg{"pricelist_id", "=", listID}, oarg{"currency_id", "=", curID}})
+			curID, err := o.GetID("res.currency", oarg{oarg{"name", "=", p.Currency}})
+			o.checkErr(err)
+			listID, err := o.GetID("product.pricelist", oarg{oarg{"name", "=", p.Name}, oarg{"currency_id", "=", curID}})
+			o.checkErr(err)
+			pid, err := o.GetID("product.template", oarg{oarg{"default_code", "=", p.Matnr}})
+			o.checkErr(err)
+			r, err := o.GetID(umdl, oarg{oarg{"product_tmpl_id", "=", pid}, oarg{"pricelist_id", "=", listID}, oarg{"currency_id", "=", curID}})
+			o.checkErr(err)
 			ur := map[string]interface{}{
 				"product_tmpl_id": pid,
 				"applied_on":      "1_product",
@@ -376,8 +392,8 @@ func (o *OdooConn) PricelistCustomerNetoutItems() {
 				"compute_price":   "fixed",
 				"fixed_price":     p.NetPrice,
 			}
-			// o.Log.Infow(mdl, "model", umdl, "record", ur, "r", r)
-			o.Log.Infow(umdl, "ur", ur, "rid", r)
+			// o.Log.Info(mdl, "model", umdl, "record", ur, "r", r)
+			o.Log.Info(umdl, "ur", ur, "rid", r)
 
 			o.Record(umdl, r, ur)
 
@@ -431,11 +447,16 @@ func (o *OdooConn) ProductPricelistItemMatgroup() {
 			defer wg.Done()
 			sem <- 1
 			// s := "select id,categ_id,applied_on,base,base_pricelist_id,pricelist_id,company_id,currency_id,date_start,date_end,percent_price from product_pricelist_item;"
-			cid := o.CompanyID(v.Company)
-			curid := o.GetID("res.currency", oarg{oarg{"name", "=", v.Currency}})
-			listID := o.GetID("product.pricelist", oarg{oarg{"name", "=", v.Name}, oarg{"currency_id", "=", curid}, oarg{"company_id", "=", cid}})
-			categID := o.GetID("product.category", oarg{oarg{"name", "like", v.Matkl}})
-			r := o.GetID(umdl, oarg{oarg{"categ_id", "=", categID}, oarg{"pricelist_id", "=", listID}, oarg{"currency_id", "=", curid}, oarg{"company_id", "=", cid}})
+			cid, err := o.CompanyID(v.Company)
+			o.checkErr(err)
+			curid, err := o.GetID("res.currency", oarg{oarg{"name", "=", v.Currency}})
+			o.checkErr(err)
+			listID, err := o.GetID("product.pricelist", oarg{oarg{"name", "=", v.Name}, oarg{"currency_id", "=", curid}, oarg{"company_id", "=", cid}})
+			o.checkErr(err)
+			categID, err := o.GetID("product.category", oarg{oarg{"name", "like", v.Matkl}})
+			o.checkErr(err)
+			r, err := o.GetID(umdl, oarg{oarg{"categ_id", "=", categID}, oarg{"pricelist_id", "=", listID}, oarg{"currency_id", "=", curid}, oarg{"company_id", "=", cid}})
+			o.checkErr(err)
 			ur := map[string]interface{}{
 				"categ_id":      categID,
 				"applied_on":    "2_product_category",
@@ -447,7 +468,7 @@ func (o *OdooConn) ProductPricelistItemMatgroup() {
 				"date_start":    v.DateStart,
 				"date_end":      v.DateEnd,
 			}
-			o.Log.Infow(mdl, "model", umdl, "record", ur, "r", r)
+			o.Log.Info(mdl, "model", umdl, "record", ur, "r", r)
 
 			o.Record(umdl, r, ur)
 

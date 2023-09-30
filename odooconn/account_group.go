@@ -32,7 +32,8 @@ func (o *OdooConn) AccountGroup() {
 	recs := len(dbrecs)
 	bar := progressbar.Default(int64(recs))
 	for _, v := range dbrecs {
-		r := o.GetID(umdl, oarg{oarg{"code_prefix_start", "=", v.CodePrefixStart}})
+		r, err := o.GetID(umdl, oarg{oarg{"code_prefix_start", "=", v.CodePrefixStart}})
+		o.checkErr(err)
 
 		ur := map[string]interface{}{
 			"code_prefix_start": v.CodePrefixStart,
@@ -40,7 +41,7 @@ func (o *OdooConn) AccountGroup() {
 			"name":              v.Name,
 		}
 
-		o.Log.Infow(umdl, "ur", ur, "r", r)
+		o.Log.Info(umdl, "ur", ur, "r", r)
 
 		o.Record(umdl, r, ur)
 

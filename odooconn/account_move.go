@@ -32,7 +32,7 @@ func (o *OdooConn) AccountMove() {
 	// 			"name":       u.Department,
 	// 			"company_id": company_id,
 	// 		}
-	// 		o.Log.Infow(umdl, "u", u, "record", ur, "r", r)
+	// 		o.Log.Info(umdl, "u", u, "record", ur, "r", r)
 
 	// o.Record(umdl, r, ur)
 

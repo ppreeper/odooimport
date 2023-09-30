@@ -48,10 +48,13 @@ func (o *OdooConn) ProductCustomerPart() {
 			defer wg.Done()
 			sem <- 1
 
-			partnerID := o.GetID("res.partner", oarg{oarg{"ref", "=", v.Customer}})
-			productID := o.GetID("product.template", oarg{oarg{"default_code", "=", v.DefaultCode}})
+			partnerID, err := o.GetID("res.partner", oarg{oarg{"ref", "=", v.Customer}})
+			o.checkErr(err)
+			productID, err := o.GetID("product.template", oarg{oarg{"default_code", "=", v.DefaultCode}})
+			o.checkErr(err)
 
-			r := o.GetID(umdl, oarg{oarg{"partner_id", "=", partnerID}, oarg{"product_tmpl_id", "=", productID}})
+			r, err := o.GetID(umdl, oarg{oarg{"partner_id", "=", partnerID}, oarg{"product_tmpl_id", "=", productID}})
+			o.checkErr(err)
 
 			ur := map[string]interface{}{
 				"partner_id":      partnerID,
@@ -59,7 +62,7 @@ func (o *OdooConn) ProductCustomerPart() {
 				"part_number":     v.Custmatnr,
 			}
 
-			o.Log.Infow(umdl, "record", ur, "r", r)
+			o.Log.Info(umdl, "record", ur, "r", r)
 
 			o.Record(umdl, r, ur)
 

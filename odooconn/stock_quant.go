@@ -13,7 +13,8 @@ func (o *OdooConn) StockQuantUnlink(pageSize int) {
 	mdl := "stock_quant"
 	umdl := strings.Replace(mdl, "_", ".", -1)
 	fmt.Printf("\n%v StockQuant %v\n", umdl, pageSize)
-	odoorecs := o.Search(umdl, oarg{})
+	odoorecs, err := o.Search(umdl, oarg{})
+	o.checkErr(err)
 	ddList := getPages(odoorecs, pageSize)
 
 	bar := progressbar.Default(int64(len(ddList)))
@@ -45,7 +46,7 @@ func (o *OdooConn) StockQuant(company string) {
 
 	salesorg := "1000"
 
-	stmt := ``
+	stmt := `` + salesorg
 
 	type Line struct {
 		Company     string  `db:"company"`
@@ -64,8 +65,9 @@ func (o *OdooConn) StockQuant(company string) {
 
 	// pgs := o.ProductCategoryMap()
 	// uom := o.UomMapper()
-	cids := o.ModelMap("res.company", "name")
-
+	cids, err := o.ModelMap("res.company", "name")
+	o.checkErr(err)
+	
 	recs := len(rr)
 	bar := progressbar.Default(int64(recs))
 	sem := make(chan int, o.JobCount)
@@ -77,8 +79,10 @@ func (o *OdooConn) StockQuant(company string) {
 			defer wg.Done()
 			sem <- 1
 
-			productTmplId := o.GetID("product.template", oarg{oarg{"default_code", "=", v.DefaultCode}})
-			productId := o.GetID("product.product", oarg{oarg{"product_tmpl_id", "=", productTmplId}, oarg{"default_code", "=", v.DefaultCode}})
+			productTmplId, err := o.GetID("product.template", oarg{oarg{"default_code", "=", v.DefaultCode}})
+			o.checkErr(err)
+			productId, err := o.GetID("product.product", oarg{oarg{"product_tmpl_id", "=", productTmplId}, oarg{"default_code", "=", v.DefaultCode}})
+			o.checkErr(err)
 
 			companyId := cids[v.Company]
 
@@ -95,9 +99,10 @@ func (o *OdooConn) StockQuant(company string) {
 				location += "/" + v.Sbin
 			}
 
-			locationId := o.GetID("stock.location", oarg{oarg{"complete_name", "=", location}})
+			locationId, err := o.GetID("stock.location", oarg{oarg{"complete_name", "=", location}})
+			o.checkErr(err)
 
-			r := o.GetID(umdl, oarg{oarg{"product_id", "=", productId}, oarg{"company_id", "=", companyId}, oarg{"location_id", "=", locationId}})
+			r, err := o.GetID(umdl, oarg{oarg{"product_id", "=", productId}, oarg{"company_id", "=", companyId}, oarg{"location_id", "=", locationId}})
 
 			ur := map[string]interface{}{
 				"product_id":             productId,
@@ -106,12 +111,14 @@ func (o *OdooConn) StockQuant(company string) {
 				"inventory_quantity":     v.Quantity,
 				"inventory_quantity_set": true,
 			}
-			o.Log.Debugw(umdl, "r", r, "ur", ur)
+			o.Log.Debug(umdl, "r", r, "ur", ur)
 
-			row := o.Record(umdl, r, ur)
-			if row == -1 {
-				o.Log.Errorw(umdl, "v", v, "ur", ur)
-			}
+			// row, err :=
+			o.Record(umdl, r, ur)
+			o.checkErr(err)
+			// if row == -1 {
+			// 	o.Log.Error(umdl, "v", v, "ur", ur)
+			// }
 
 			// err := bar.Add(1)
 			// o.checkErr(err)
@@ -145,8 +152,9 @@ func (o *OdooConn) StockQuantConsignment() {
 	err := o.DB.Select(&rr, stmt)
 	o.checkErr(err)
 
-	cids := o.ModelMap("res.company", "name")
-
+	cids, err := o.ModelMap("res.company", "name")
+	o.checkErr(err)
+	
 	recs := len(rr)
 	bar := progressbar.Default(int64(recs))
 	sem := make(chan int, o.JobCount)
@@ -158,10 +166,13 @@ func (o *OdooConn) StockQuantConsignment() {
 			defer wg.Done()
 			sem <- 1
 
-			productTmplId := o.GetID("product.template", oarg{oarg{"default_code", "=", v.DefaultCode}})
-			productId := o.GetID("product.product", oarg{oarg{"product_tmpl_id", "=", productTmplId}, oarg{"default_code", "=", v.DefaultCode}})
+			productTmplId, err := o.GetID("product.template", oarg{oarg{"default_code", "=", v.DefaultCode}})
+			o.checkErr(err)
+			productId, err := o.GetID("product.product", oarg{oarg{"product_tmpl_id", "=", productTmplId}, oarg{"default_code", "=", v.DefaultCode}})
+			o.checkErr(err)
 
-			ownerID := o.GetID("res.partner", oarg{oarg{"ref", "=", v.Shipto}})
+			ownerID, err := o.GetID("res.partner", oarg{oarg{"ref", "=", v.Shipto}})
+			o.checkErr(err)
 
 			companyId := cids[v.Company]
 
@@ -172,9 +183,11 @@ func (o *OdooConn) StockQuantConsignment() {
 			// 	location += "/" + v.Sbin
 			// }
 
-			locationId := o.GetID("stock.location", oarg{oarg{"complete_name", "=", location}})
+			locationId, err := o.GetID("stock.location", oarg{oarg{"complete_name", "=", location}})
+			o.checkErr(err)
 
-			r := o.GetID(umdl, oarg{oarg{"product_id", "=", productId}, oarg{"company_id", "=", companyId}, oarg{"location_id", "=", locationId}})
+			r, err := o.GetID(umdl, oarg{oarg{"product_id", "=", productId}, oarg{"company_id", "=", companyId}, oarg{"location_id", "=", locationId}})
+			o.checkErr(err)
 
 			ur := map[string]interface{}{
 				"product_id":             productId,
@@ -185,7 +198,7 @@ func (o *OdooConn) StockQuantConsignment() {
 				"owner_id":               ownerID,
 			}
 
-			o.Log.Debugw(umdl, "r", r, "ur", ur)
+			o.Log.Debug(umdl, "r", r, "ur", ur)
 			o.Record(umdl, r, ur)
 
 			<-sem

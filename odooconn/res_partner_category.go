@@ -37,10 +37,11 @@ func (o *OdooConn) ResPartnerCategory() {
 			defer bar.Add(1)
 			defer wg.Done()
 			sem <- 1
-			r := o.GetID(umdl, oarg{oarg{"name", "=", v.Rname}})
+			r, err := o.GetID(umdl, oarg{oarg{"name", "=", v.Rname}})
+			o.checkErr(err)
 
 			ur := map[string]interface{}{"name": v.Rname}
-			o.Log.Infow(mdl, "model", umdl, "record", ur, "r", r)
+			o.Log.Info(mdl, "model", umdl, "record", ur, "r", r)
 
 			o.Record(umdl, r, ur)
 

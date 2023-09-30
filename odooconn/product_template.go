@@ -60,9 +60,11 @@ func (o *OdooConn) ProductTemplate(ptfilt string) {
 	recs := len(rr)
 	bar := progressbar.Default(int64(recs))
 
-	taxSell := o.GetID("account.tax", oarg{oarg{"name", "=", "GST for sales - 5%"}})
-	taxPurchase := o.GetID("account.tax", oarg{oarg{"name", "=", "GST for purchases - 5%"}})
-
+	taxSell, err := o.GetID("account.tax", oarg{oarg{"name", "=", "GST for sales - 5%"}})
+	o.checkErr(err)
+	taxPurchase, err := o.GetID("account.tax", oarg{oarg{"name", "=", "GST for purchases - 5%"}})
+	o.checkErr(err)
+	
 	pgs := o.ProductCategoryMap()
 	uuom := o.UomUomMap()
 
@@ -74,7 +76,8 @@ func (o *OdooConn) ProductTemplate(ptfilt string) {
 			defer wg.Done()
 			sem <- 1
 
-			r := o.GetID(umdl, oarg{oarg{"default_code", "=", v.DefaultCode}})
+			r, err := o.GetID(umdl, oarg{oarg{"default_code", "=", v.DefaultCode}})
+			o.checkErr(err)
 
 			categID := -1
 			if v.Matgrp != "" {
@@ -113,10 +116,10 @@ func (o *OdooConn) ProductTemplate(ptfilt string) {
 				ur["sequence_number"] = v.SortCode
 			}
 			if uomID == -2 {
-				o.Log.Infow(umdl)
+				o.Log.Info(umdl)
 			}
 
-			o.Log.Infow(umdl, "ur", ur, "r", r)
+			o.Log.Info(umdl, "ur", ur, "r", r)
 
 			o.Record(umdl, r, ur)
 
@@ -135,8 +138,9 @@ func (o *OdooConn) ProductTemplateDelpro() {
 	sem := make(chan int, o.JobCount)
 	var wg sync.WaitGroup
 
-	saleableID := o.GetID("product.category", oarg{oarg{"name", "=", "Saleable"}})
-
+	saleableID, err := o.GetID("product.category", oarg{oarg{"name", "=", "Saleable"}})
+	o.checkErr(err)
+	
 	// saleable
 	stmt := `
 	select distinct 
@@ -173,7 +177,7 @@ func (o *OdooConn) ProductTemplateDelpro() {
 		Brand           string  `db:"brand"`
 	}
 	var rr []Product
-	err := o.DB.Select(&rr, stmt)
+	err = o.DB.Select(&rr, stmt)
 	o.checkErr(err)
 	recs := len(rr)
 	bar := progressbar.Default(int64(recs))
@@ -189,16 +193,20 @@ func (o *OdooConn) ProductTemplateDelpro() {
 			sem <- 1
 
 			companyID := cids[v.Company]
-			o.Log.Infow("company", "v.Company", v.Company, "companyID", companyID)
+			o.Log.Info("company", "v.Company", v.Company, "companyID", companyID)
 
-			pid := o.GetID("product.category", oarg{oarg{"name", "=", v.Ptype}, oarg{"parent_id", "=", saleableID}})
-			gid := o.GetID("product.category", oarg{oarg{"name", "=", v.Brand}, oarg{"parent_id", "=", pid}})
+			pid, err := o.GetID("product.category", oarg{oarg{"name", "=", v.Ptype}, oarg{"parent_id", "=", saleableID}})
+			o.checkErr(err)
+			gid, err := o.GetID("product.category", oarg{oarg{"name", "=", v.Brand}, oarg{"parent_id", "=", pid}})
+			o.checkErr(err)
 			if v.Ptype == "" {
 				gid = saleableID
 			}
 
-			r := o.GetID(umdl, oarg{oarg{"name", "=", v.Name}, oarg{"default_code", "like", v.Name}, oarg{"company_id", "=", companyID}})
-			uomID := o.GetID("uom.uom", oarg{oarg{"name", "=", "ea"}})
+			r, err := o.GetID(umdl, oarg{oarg{"name", "=", v.Name}, oarg{"default_code", "like", v.Name}, oarg{"company_id", "=", companyID}})
+			o.checkErr(err)
+			uomID, err := o.GetID("uom.uom", oarg{oarg{"name", "=", "ea"}})
+			o.checkErr(err)
 			ptype := "product"
 			// v.Prefix + v.Name
 
@@ -228,7 +236,7 @@ func (o *OdooConn) ProductTemplateDelpro() {
 			// 	ur["mrp_type"] = v.MRPRule
 			// }
 
-			o.Log.Infow(umdl, "record", ur, "r", r)
+			o.Log.Info(umdl, "record", ur, "r", r)
 
 			o.Record(umdl, r, ur)
 

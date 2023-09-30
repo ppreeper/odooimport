@@ -15,11 +15,12 @@ func (o *OdooConn) DecimalPrecision(name string, digits int) {
 	err := bar.Add(1)
 	o.checkErr(err)
 
-	r := o.GetID(umdl, oarg{oarg{"name", "=", name}})
+	r, err := o.GetID(umdl, oarg{oarg{"name", "=", name}})
+	o.checkErr(err)
 
 	ur := map[string]interface{}{"name": name, "digits": digits}
 
-	o.Log.Infow(mdl, "model", umdl, "record", ur)
+	o.Log.Info(mdl, "model", umdl, "record", ur)
 
 	o.Record(umdl, r, ur)
 }

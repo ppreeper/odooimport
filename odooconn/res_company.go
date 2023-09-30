@@ -64,18 +64,25 @@ func (o *OdooConn) ResCompany() {
 		err := bar.Add(1)
 		o.checkErr(err)
 
-		r := o.GetID(umdl, oarg{oarg{"name", "=", v.Name}})
-		pid := o.GetID(umdl, oarg{oarg{"name", "=", v.ParentCompany}})
+		r, err := o.GetID(umdl, oarg{oarg{"name", "=", v.Name}})
+		o.checkErr(err)
+		pid, err := o.GetID(umdl, oarg{oarg{"name", "=", v.ParentCompany}})
+		o.checkErr(err)
 		// chartID := o.GetID("account.chart.template", oarg{oarg{"name", "like", "Canada"}})
-		paperID := o.GetID("report.paperformat", oarg{oarg{"name", "=", "US Letter"}})
+		paperID, err := o.GetID("report.paperformat", oarg{oarg{"name", "=", "US Letter"}})
+		o.checkErr(err)
 		// accountJournalID := o.GetID("account.journal", oarg{oarg{"name", "=", "Miscellaneous Operations"}})
-		salesTaxID := o.GetID("account.tax", oarg{oarg{"name", "=", "GST for sales - 5%"}})
-		purchaseTaxID := o.GetID("account.tax", oarg{oarg{"name", "=", "GST for purchases - 5%"}})
+		salesTaxID, err := o.GetID("account.tax", oarg{oarg{"name", "=", "GST for sales - 5%"}})
+		o.checkErr(err)
+		purchaseTaxID, err := o.GetID("account.tax", oarg{oarg{"name", "=", "GST for purchases - 5%"}})
+		o.checkErr(err)
 		// currencyExchangeJournalID := o.GetID("account.journal", oarg{oarg{"name", "=", "Exchange Difference"}})
 		// incomeCurrencyExchangeAccountID := o.GetID("account.account", oarg{oarg{"name", "like", "420000"}})
 		// expenseCurrencyExchangeAccountID := o.GetID("account.account", oarg{oarg{"name", "like", "550000"}})
-		cid := o.CountryID(v.Country)
-		sid := o.StateID(cid, v.State)
+		cid, err := o.CountryID(v.Country)
+		o.checkErr(err)
+		sid, err := o.StateID(cid, v.State)
+		o.checkErr(err)
 
 		ur := map[string]interface{}{
 			"name":       v.Name,
@@ -99,20 +106,20 @@ func (o *OdooConn) ResCompany() {
 			"fiscalyear_last_month":   fmt.Sprintf("%d", v.FiscalyearLastMonth),
 			"fiscalyear_last_day":     v.FiscalyearLastDay,
 		}
-		o.Log.Infow(umdl, "ur", ur, "pid", pid, "r", r, "v.ID", v.ID)
+		o.Log.Info(umdl, "ur", ur, "pid", pid, "r", r, "v.ID", v.ID)
 
 		if v.ID == 1 {
 			if r == -1 {
 				row, res, err := o.WriteRecord(umdl, v.ID, UPDATE, ur)
 				if err != nil {
-					o.ErrLog.Infow(umdl, "row", row, "res", res, "err", err)
+					o.Log.Info(umdl, "row", row, "res", res, "err", err)
 				}
 				o.ResCompanyLDAP(v.ID)
 			} else {
 				if !o.NoUpdate {
 					row, res, err := o.WriteRecord(umdl, r, UPDATE, ur)
 					if err != nil {
-						o.ErrLog.Infow(umdl, "row", row, "res", res, "err", err)
+						o.Log.Info(umdl, "row", row, "res", res, "err", err)
 					}
 					o.ResCompanyLDAP(r)
 				}
@@ -122,14 +129,14 @@ func (o *OdooConn) ResCompany() {
 			if r == -1 {
 				row, res, err := o.WriteRecord(umdl, r, INSERT, ur)
 				if err != nil {
-					o.ErrLog.Infow(umdl, "row", row, "res", res, "err", err)
+					o.Log.Info(umdl, "row", row, "res", res, "err", err)
 				}
 				o.ResCompanyLDAP(r)
 			} else {
 				if !o.NoUpdate {
 					row, res, err := o.WriteRecord(umdl, r, UPDATE, ur)
 					if err != nil {
-						o.ErrLog.Infow(umdl, "row", row, "res", res, "err", err)
+						o.Log.Info(umdl, "row", row, "res", res, "err", err)
 					}
 					o.ResCompanyLDAP(r)
 				}
@@ -141,7 +148,8 @@ func (o *OdooConn) ResCompany() {
 func (o *OdooConn) ResCompanyMap() map[string]int {
 	mdl := "res_company"
 	umdl := strings.Replace(mdl, "_", ".", -1)
-	cc := o.SearchRead(umdl, oarg{}, 0, 0, []string{"name"})
+	cc, err := o.SearchRead(umdl, oarg{}, 0, 0, []string{"name"})
+	o.checkErr(err)
 	cids := map[string]int{}
 	for _, c := range cc {
 		cids[c["name"].(string)] = int(c["id"].(float64))

@@ -60,12 +60,18 @@ func (o *OdooConn) ResPartnerPlant() {
 			defer wg.Done()
 			sem <- 1
 
-			r := o.GetID(umdl, oarg{oarg{"name", "=", v.Pname}})
-			companyID := o.CompanyID(v.Company)
-			parentID := o.PartnerID(v.Company)
-			countryID := o.CountryID(v.Country)
-			stateID := o.StateID(countryID, v.State)
-			propertyAccountPositionID := o.FiscalPosition(countryID, v.State)
+			r, err := o.GetID(umdl, oarg{oarg{"name", "=", v.Pname}})
+			o.checkErr(err)
+			companyID, err := o.CompanyID(v.Company)
+			o.checkErr(err)
+			parentID, err := o.PartnerID(v.Company)
+			o.checkErr(err)
+			countryID, err := o.CountryID(v.Country)
+			o.checkErr(err)
+			stateID, err := o.StateID(countryID, v.State)
+			o.checkErr(err)
+			propertyAccountPositionID, err := o.FiscalPosition(countryID, v.State)
+			o.checkErr(err)
 
 			ur := map[string]interface{}{
 				"name":                         v.Pname,
@@ -84,7 +90,7 @@ func (o *OdooConn) ResPartnerPlant() {
 				"is_company":                   true,
 				"property_account_position_id": propertyAccountPositionID,
 			}
-			o.Log.Infow(mdl, "model", umdl, "record", ur, "r", r)
+			o.Log.Info(mdl, "model", umdl, "record", ur, "r", r)
 
 			o.Record(umdl, r, ur)
 

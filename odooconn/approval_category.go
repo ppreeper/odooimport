@@ -26,7 +26,8 @@ func (o *OdooConn) ApprovalCategory() {
 	err := o.DB.Select(&dbrecs, stmt)
 	o.checkErr(err)
 
-	cids := o.ModelMap("res.company", "name")
+	cids, err := o.ModelMap("res.company", "name")
+	o.checkErr(err)
 
 	// tasker
 	recs := len(dbrecs)
@@ -34,7 +35,8 @@ func (o *OdooConn) ApprovalCategory() {
 	for _, v := range dbrecs {
 		cid := cids[v.Company]
 
-		r := o.GetID(umdl, oarg{oarg{"name", "=", v.Name}, oarg{"company_id", "=", cid}})
+		r, err := o.GetID(umdl, oarg{oarg{"name", "=", v.Name}, oarg{"company_id", "=", cid}})
+		o.checkErr(err)
 
 		ur := map[string]interface{}{
 			"name":             v.Name,
@@ -43,7 +45,7 @@ func (o *OdooConn) ApprovalCategory() {
 			"company_id":       cid,
 		}
 
-		o.Log.Debugw(umdl, "ur", ur, "r", r)
+		o.Log.Debug(umdl, "ur", ur, "r", r)
 
 		o.Record(umdl, r, ur)
 

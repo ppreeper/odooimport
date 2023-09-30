@@ -109,12 +109,6 @@ func execFlags(f string, o *odooconn.OdooConn, c Conf) {
 		o.ResPartnerCustomer()
 	case "customer_link":
 		o.ResPartnerCustomerLink()
-	case "customer_delpro":
-		o.ResPartnerCustomerDelpro()
-	case "customer_delpro_link":
-		o.ResPartnerCustomerLinkDelpro()
-	case "customer_sr_crm":
-		o.ResPartnerCustomerSROdooCRM()
 	// Partners Vendor
 	// partner_avl
 	case "vendor":
@@ -175,5 +169,5 @@ func execFlags(f string, o *odooconn.OdooConn, c Conf) {
 		fmt.Println("selected: ", f)
 	}
 
-	log.Info("odooimport end")
+	ilog.Info("odooimport end")
 }

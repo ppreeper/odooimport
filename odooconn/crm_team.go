@@ -45,9 +45,12 @@ func (o *OdooConn) CrmTeam() {
 			defer wg.Done()
 			sem <- 1
 
-			r := o.GetID(umdl, oarg{oarg{"name", "=", v.Team}})
-			rp := o.GetID("res.partner", oarg{oarg{"name", "=", v.Ename}})
-			ru := o.GetID("res.users", oarg{oarg{"partner_id", "=", rp}})
+			r, err := o.GetID(umdl, oarg{oarg{"name", "=", v.Team}})
+			o.checkErr(err)
+			rp, err := o.GetID("res.partner", oarg{oarg{"name", "=", v.Ename}})
+			o.checkErr(err)
+			ru, err := o.GetID("res.users", oarg{oarg{"partner_id", "=", rp}})
+			o.checkErr(err)
 
 			ur := map[string]interface{}{
 				"name":       v.Team,
@@ -55,7 +58,7 @@ func (o *OdooConn) CrmTeam() {
 				"user_id":    ru,
 			}
 
-			o.Log.Infow(umdl, "ur", ur, "r", r)
+			o.Log.Info(umdl, "ur", ur, "r", r)
 
 			o.Record(umdl, r, ur)
 
@@ -100,14 +103,17 @@ func (o *OdooConn) CrmTeamMembers() {
 			defer wg.Done()
 			sem <- 1
 
-			o.Log.Infow("", "team", v)
-			r := o.GetID(umdl, oarg{oarg{"name", "=", v.Team}})
-			rp := o.GetID("res.users", oarg{oarg{"name", "=", v.Ename}})
-			team := o.SearchRead(umdl, oarg{oarg{"name", "=", v.Team}}, 0, 0, []string{"member_ids"})
+			o.Log.Info("", "team", v)
+			r, err := o.GetID(umdl, oarg{oarg{"name", "=", v.Team}})
+			o.checkErr(err)
+			rp, err := o.GetID("res.users", oarg{oarg{"name", "=", v.Ename}})
+			o.checkErr(err)
+			team, err := o.SearchRead(umdl, oarg{oarg{"name", "=", v.Team}}, 0, 0, []string{"member_ids"})
+			o.checkErr(err)
 			mids := team[0]["member_ids"]
 
 			var mIDS []int
-			if !intInSlice(rp, mIDS) {
+			if !valInSlice(rp, mIDS) {
 				mIDS = append(mIDS, rp)
 			}
 
@@ -119,7 +125,7 @@ func (o *OdooConn) CrmTeamMembers() {
 				"name":       v.Team,
 				"member_ids": mIDS,
 			}
-			o.Log.Infow(mdl, "model", umdl, "record", ur, "r", r)
+			o.Log.Info(mdl, "model", umdl, "record", ur, "r", r)
 
 			o.Record(umdl, r, ur)
 
@@ -127,22 +133,4 @@ func (o *OdooConn) CrmTeamMembers() {
 		}(sem, &wg, bar, v)
 	}
 	wg.Wait()
-}
-
-func stringInSlice(a string, list []string) bool {
-	for _, b := range list {
-		if b == a {
-			return true
-		}
-	}
-	return false
-}
-
-func intInSlice(a int, list []int) bool {
-	for _, b := range list {
-		if b == a {
-			return true
-		}
-	}
-	return false
 }

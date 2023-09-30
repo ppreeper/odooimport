@@ -17,7 +17,8 @@ func (o *OdooConn) ProductCategoryConsumable1() {
 	sem := make(chan int, o.JobCount)
 	var wg sync.WaitGroup
 
-	allID := o.GetID(umdl, oarg{oarg{"name", "=", "All"}})
+	allID, err := o.GetID(umdl, oarg{oarg{"name", "=", "All"}})
+	o.checkErr(err)
 
 	type Group1 struct {
 		Group1 string `db:"group1"`
@@ -36,7 +37,7 @@ func (o *OdooConn) ProductCategoryConsumable1() {
 	`
 
 	var ccg1 []Group1
-	err := o.DB.Select(&ccg1, stmt)
+	err = o.DB.Select(&ccg1, stmt)
 	o.checkErr(err)
 	recs := len(ccg1)
 	bar := progressbar.Default(int64(recs))
@@ -50,9 +51,11 @@ func (o *OdooConn) ProductCategoryConsumable1() {
 			defer wg.Done()
 			sem <- 1
 
-			gid := o.GetID(umdl, oarg{oarg{"name", "=", v.Group1}})
-			gval := o.SearchRead(umdl, oarg{oarg{"name", "=", v.Group1}}, 0, 0, []string{"property_cost_method", "property_valuation"})
-			o.Log.Infow("", "gval", gval)
+			gid, err := o.GetID(umdl, oarg{oarg{"name", "=", v.Group1}})
+			o.checkErr(err)
+			gval, err := o.SearchRead(umdl, oarg{oarg{"name", "=", v.Group1}}, 0, 0, []string{"property_cost_method", "property_valuation"})
+			o.checkErr(err)
+			o.Log.Info("", "gval", gval)
 
 			// Costing Method::property_cost_method
 			// Standard Price: standard
@@ -70,7 +73,7 @@ func (o *OdooConn) ProductCategoryConsumable1() {
 				"property_valuation":   "real_time",
 			}
 
-			o.Log.Infow(mdl, "group", "consumables1", "model", umdl, "record", ur, "gid", gid)
+			o.Log.Info(mdl, "group", "consumables1", "model", umdl, "record", ur, "gid", gid)
 
 			o.Record(umdl, gid, ur)
 			// if gid == -1 {
@@ -98,7 +101,8 @@ func (o *OdooConn) ProductCategoryConsumable2() {
 	sem := make(chan int, o.JobCount)
 	var wg sync.WaitGroup
 
-	allID := o.GetID(umdl, oarg{oarg{"name", "=", "All"}})
+	allID, err := o.GetID(umdl, oarg{oarg{"name", "=", "All"}})
+	o.checkErr(err)
 
 	type Group2 struct {
 		Group1 string `db:"group1"`
@@ -121,7 +125,7 @@ func (o *OdooConn) ProductCategoryConsumable2() {
 	`
 
 	var ccg2 []Group2
-	err := o.DB.Select(&ccg2, stmt)
+	err = o.DB.Select(&ccg2, stmt)
 	o.checkErr(err)
 	recs := len(ccg2)
 	bar := progressbar.Default(int64(recs))
@@ -135,10 +139,12 @@ func (o *OdooConn) ProductCategoryConsumable2() {
 			defer wg.Done()
 			sem <- 1
 
-			pid := o.GetID(umdl, oarg{oarg{"name", "=", v.Group1}, oarg{"parent_id", "=", allID}})
+			pid, err := o.GetID(umdl, oarg{oarg{"name", "=", v.Group1}, oarg{"parent_id", "=", allID}})
+			o.checkErr(err)
 			gid := -1
 			if pid != -1 {
-				gid = o.GetID(umdl, oarg{oarg{"name", "=", v.Group2}, oarg{"parent_id", "=", pid}})
+				gid, err = o.GetID(umdl, oarg{oarg{"name", "=", v.Group2}, oarg{"parent_id", "=", pid}})
+				o.checkErr(err)
 			}
 
 			// Costing Method::property_cost_method
@@ -156,7 +162,7 @@ func (o *OdooConn) ProductCategoryConsumable2() {
 				"property_cost_method": "average",
 				"property_valuation":   "real_time",
 			}
-			o.Log.Infow(mdl, "group", "consumables2", "model", umdl, "record", ur, "gid", gid)
+			o.Log.Info(mdl, "group", "consumables2", "model", umdl, "record", ur, "gid", gid)
 
 			o.Record(umdl, gid, ur)
 			// if gid == -1 {
@@ -184,7 +190,8 @@ func (o *OdooConn) ProductCategoryConsumable3() {
 	sem := make(chan int, o.JobCount)
 	var wg sync.WaitGroup
 
-	allID := o.GetID(umdl, oarg{oarg{"name", "=", "All"}})
+	allID, err := o.GetID(umdl, oarg{oarg{"name", "=", "All"}})
+	o.checkErr(err)
 
 	type MatGrp2 struct {
 		Matgrp    string `db:"matgrp"`
@@ -217,7 +224,7 @@ func (o *OdooConn) ProductCategoryConsumable3() {
 	`
 
 	var ccmg2 []MatGrp2
-	err := o.DB.Select(&ccmg2, stmt)
+	err = o.DB.Select(&ccmg2, stmt)
 	o.checkErr(err)
 	recs := len(ccmg2)
 	bar := progressbar.Default(int64(recs))
@@ -230,14 +237,17 @@ func (o *OdooConn) ProductCategoryConsumable3() {
 			defer wg.Done()
 			sem <- 1
 
-			pid := o.GetID(umdl, oarg{oarg{"name", "=", v.Group1}, oarg{"parent_id", "=", allID}})
+			pid, err := o.GetID(umdl, oarg{oarg{"name", "=", v.Group1}, oarg{"parent_id", "=", allID}})
+			o.checkErr(err)
 			sid := -1
 			if pid != -1 {
-				sid = o.GetID(umdl, oarg{oarg{"name", "=", v.Group2}, oarg{"parent_id", "=", pid}})
+				sid, err = o.GetID(umdl, oarg{oarg{"name", "=", v.Group2}, oarg{"parent_id", "=", pid}})
+				o.checkErr(err)
 			}
 			gid := -1
 			if sid != -1 {
-				gid = o.GetID(umdl, oarg{oarg{"name", "=", v.Matgrp}, oarg{"parent_id", "=", sid}})
+				gid, err = o.GetID(umdl, oarg{oarg{"name", "=", v.Matgrp}, oarg{"parent_id", "=", sid}})
+				o.checkErr(err)
 			}
 
 			// Costing Method::property_cost_method
@@ -273,7 +283,7 @@ func (o *OdooConn) ProductCategoryConsumable3() {
 			// 	ur["buyer_id"] = bid
 			// }
 
-			o.Log.Infow(mdl, "group", "consumables matgrp2", "model", umdl, "record", ur, "gid", gid)
+			o.Log.Info(mdl, "group", "consumables matgrp2", "model", umdl, "record", ur, "gid", gid)
 
 			o.Record(umdl, gid, ur)
 			// if gid == -1 {

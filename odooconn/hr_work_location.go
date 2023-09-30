@@ -60,16 +60,19 @@ func (o *OdooConn) HRWorkLocation() {
 			defer wg.Done()
 			sem <- 1
 
-			r := o.GetID(umdl, oarg{oarg{"name", "=", v.Pname}})
-			companyID := o.CompanyID(v.Company)
-			addressID := o.PartnerID(v.Pname)
+			r, err := o.GetID(umdl, oarg{oarg{"name", "=", v.Pname}})
+			o.checkErr(err)
+			companyID, err := o.CompanyID(v.Company)
+			o.checkErr(err)
+			addressID, err := o.PartnerID(v.Pname)
+			o.checkErr(err)
 
 			ur := map[string]interface{}{
 				"name":       v.Pname,
 				"company_id": companyID,
 				"address_id": addressID,
 			}
-			o.Log.Infow(mdl, "model", umdl, "record", ur, "r", r)
+			o.Log.Info(mdl, "model", umdl, "record", ur, "r", r)
 
 			o.Record(umdl, r, ur)
 

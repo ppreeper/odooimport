@@ -11,15 +11,19 @@ func (o *OdooConn) ProductCategoryReset() {
 	umdl := strings.Replace(mdl, "_", ".", -1)
 	fmt.Printf("\n%v\nconsumables3\n", umdl)
 
-	odoorecs := o.SearchRead(umdl, oarg{}, 0, 0, []string{"display_name"})
+	odoorecs, err := o.SearchRead(umdl, oarg{}, 0, 0, []string{"display_name"})
+	o.checkErr(err)
 	fmt.Println("product.categories:", len(odoorecs))
-	odooIDs := o.Search(umdl, oarg{})
+	odooIDs, err := o.Search(umdl, oarg{})
+	o.checkErr(err)
 	fmt.Println("product.categories:", len(odooIDs))
 
 	// bar := progressbar.Default(int64(recs))
 
-	incCode := o.GetID("account.account", oarg{oarg{"code", "=", "420000"}})
-	expCode := o.GetID("account.account", oarg{oarg{"code", "=", "511100"}})
+	incCode, err := o.GetID("account.account", oarg{oarg{"code", "=", "420000"}})
+	o.checkErr(err)
+	expCode, err := o.GetID("account.account", oarg{oarg{"code", "=", "511100"}})
+	o.checkErr(err)
 
 	// tasker
 	// wg.Add(recs)
@@ -59,7 +63,7 @@ func (o *OdooConn) ProductCategoryReset() {
 		// 	ur["buyer_id"] = bid
 		// }
 
-		o.Log.Infow(umdl, "record", ur, "r", r)
+		o.Log.Info(umdl, "record", ur, "r", r)
 
 		o.Record(umdl, r, ur)
 

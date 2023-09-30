@@ -32,19 +32,24 @@ func (o *OdooConn) ResPartnerUsers() {
 			sem <- 1
 
 			name := u.CN
-			r := o.GetID(umdl, oarg{oarg{"name", "=", name}})
+			r, err := o.GetID(umdl, oarg{oarg{"name", "=", name}})
+			o.checkErr(err)
 			physOffice := u.PhysicalDeliveryOfficeName
 
-			user := o.SearchRead("res.users", oarg{oarg{"name", "=", name}}, 0, 1, []string{})
+			user, err := o.SearchRead("res.users", oarg{oarg{"name", "=", name}}, 0, 1, []string{})
+			o.checkErr(err)
 			c := user[0]["company_id"].([]interface{})
 			cid := int(c[0].(float64))
-			company := o.SearchRead("res.company", oarg{oarg{"id", "=", cid}}, 0, 1, []string{"name"})
+			company, err := o.SearchRead("res.company", oarg{oarg{"id", "=", cid}}, 0, 1, []string{"name"})
+			o.checkErr(err)
 			company_id := company[0]["id"]
 			company_name := company[0]["name"]
-			parent_id := o.GetID("res.partner", oarg{oarg{"name", "=", company_name}})
-			pid := o.GetID("res.partner", oarg{oarg{"name", "like", physOffice}, oarg{"parent_id", "=", parent_id}})
+			parent_id, err := o.GetID("res.partner", oarg{oarg{"name", "=", company_name}})
+			o.checkErr(err)
+			pid, err := o.GetID("res.partner", oarg{oarg{"name", "like", physOffice}, oarg{"parent_id", "=", parent_id}})
+			o.checkErr(err)
 
-			o.Log.Infow("", "name", name, "company_id", cid, "physOffice", physOffice, "company", company, "company_id", company_id, "pid", pid)
+			o.Log.Info("", "name", name, "company_id", cid, "physOffice", physOffice, "company", company, "company_id", company_id, "pid", pid)
 
 			ur := map[string]interface{}{
 				"name":      name,
@@ -56,7 +61,7 @@ func (o *OdooConn) ResPartnerUsers() {
 				"website":   u.WWWHomePage,
 			}
 
-			o.Log.Infow(umdl, "ur", ur, "r", r)
+			o.Log.Info(umdl, "ur", ur, "r", r)
 
 			o.Record(umdl, r, ur)
 

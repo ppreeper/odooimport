@@ -1,6 +1,9 @@
 package odooconn
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 // ResConfigSettings function
 func (o *OdooConn) ResConfigSettings(setting string, nval interface{}) {
@@ -96,8 +99,9 @@ func (o *OdooConn) ResConfigSettings(setting string, nval interface{}) {
 	// rr := o.SearchRead(umdl, oarg{{"company_id", "=", 1}}, 0, 0, []string{"company_id", f})
 	// rr := o.SearchRead(umdl, oarg{{"company_id", "=", 1}}, 0, 0, []string{})
 	// rr := o.Search(umdl, oarg{{"company_id", "=", 1}})
-	rr := o.SearchRead("ir.config_parameter", oarg{oarg{"company_id", "=", 1}}, 0, 0, []string{})
-	o.Log.Info(rr)
+	rr, err := o.SearchRead("ir.config_parameter", oarg{oarg{"company_id", "=", 1}}, 0, 0, []string{})
+	o.checkErr(err)
+	fmt.Println(rr)
 	// rid := rr[len(rr)-1]
 	// fmt.Println(rr, rid)
 	// r := o.Read(umdl, []int{rid}, []string{})
@@ -115,21 +119,21 @@ func (o *OdooConn) ResConfigSettings(setting string, nval interface{}) {
 	// var ur = map[string]interface{}{}
 	// switch nvalType := nval.(type) {
 	// case int:
-	// 	o.Log.Infow("int", "value", nvalType)
+	// 	o.Log.Info("int", "value", nvalType)
 	// 	ur[setting] = nvalType
 	// case float64:
-	// 	o.Log.Infow("float64", "value", nvalType)
+	// 	o.Log.Info("float64", "value", nvalType)
 	// 	ur[setting] = nvalType
 	// case string:
-	// 	o.Log.Infow("string", "value", nvalType)
+	// 	o.Log.Info("string", "value", nvalType)
 	// 	ur[setting] = nvalType
 	// case bool:
-	// 	o.Log.Infow("bool", "value", nvalType)
+	// 	o.Log.Info("bool", "value", nvalType)
 	// 	ur[setting] = nvalType
 	// default:
-	// 	o.Log.Infow("no valid type")
+	// 	o.Log.Info("no valid type")
 	// }
-	o.Log.Infow(mdl, "model", umdl, "record", ur, "setting", setting)
+	o.Log.Info(mdl, "model", umdl, "record", ur, "setting", setting)
 
 	// o.WriteRecord(umdl, -1, INSERT, ur)
 }

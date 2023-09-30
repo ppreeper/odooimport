@@ -15,11 +15,12 @@ func (o *OdooConn) IRConfigParameter(key string, val interface{}) {
 	err := bar.Add(1)
 	o.checkErr(err)
 
-	r := o.GetID(umdl, oarg{oarg{"key", "=", key}})
+	r, err := o.GetID(umdl, oarg{oarg{"key", "=", key}})
+	o.checkErr(err)
 
 	ur := map[string]interface{}{"key": key, "value": val}
 
-	o.Log.Infow(mdl, "model", umdl, "record", ur)
+	o.Log.Info(mdl, "model", umdl, "record", ur)
 
 	o.Record(umdl, r, ur)
 }

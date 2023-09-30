@@ -31,14 +31,15 @@ func (o *OdooConn) AccountPaymentTerm() {
 		o.checkErr(err)
 
 		// process
-		r := o.GetID(umdl, oarg{oarg{"name", "=", v.Name}})
+		r, err := o.GetID(umdl, oarg{oarg{"name", "=", v.Name}})
+		o.checkErr(err)
 
 		ur := map[string]interface{}{
 			"name": v.Name,
 			"note": v.Note,
 		}
 
-		o.Log.Infow(mdl, "model", umdl, "record", ur, "r", r)
+		o.Log.Info(mdl, "model", umdl, "record", ur, "r", r)
 
 		o.Record(umdl, r, ur)
 	}
@@ -47,7 +48,8 @@ func (o *OdooConn) AccountPaymentTerm() {
 func (o *OdooConn) AccountPaymentTermMap() map[string]int {
 	mdl := "account_payment_term"
 	umdl := strings.Replace(mdl, "_", ".", -1)
-	cc := o.SearchRead(umdl, oarg{}, 0, 0, []string{"name"})
+	cc, err := o.SearchRead(umdl, oarg{}, 0, 0, []string{"name"})
+	o.checkErr(err)
 	ids := map[string]int{}
 	for _, c := range cc {
 		ids[c["name"].(string)] = int(c["id"].(float64))
@@ -94,7 +96,8 @@ func (o *OdooConn) AccountPaymentTermLine() {
 		o.checkErr(err)
 
 		// process
-		r := o.GetID(umdl, oarg{oarg{"payment_id", "=", v.Name}})
+		r, err := o.GetID(umdl, oarg{oarg{"payment_id", "=", v.Name}})
+		o.checkErr(err)
 
 		ur := map[string]interface{}{
 			"sequence":         v.Sequence,
@@ -105,7 +108,7 @@ func (o *OdooConn) AccountPaymentTermLine() {
 			"option":           v.Option,
 		}
 
-		o.Log.Infow(mdl, "model", umdl, "record", ur, "r", r)
+		o.Log.Info(mdl, "model", umdl, "record", ur, "r", r)
 
 		o.Record(umdl, r, ur)
 	}

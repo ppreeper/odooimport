@@ -98,7 +98,8 @@ func (o *OdooConn) ResUsers() {
 
 			name := u.CN
 			upn := u.UserPrincipalName
-			warehouseID := o.GetID("stock.warehouse", oarg{oarg{"name", "=", u.PropertyWarehouseID}})
+			warehouseID, err := o.GetID("stock.warehouse", oarg{oarg{"name", "=", u.PropertyWarehouseID}})
+			o.checkErr(err)
 			var cid int
 			var ccids []int
 			switch u.Company {
@@ -121,8 +122,9 @@ func (o *OdooConn) ResUsers() {
 				cid = -1
 			}
 
-			r := o.GetID(umdl, oarg{oarg{"name", "=", name}})
-
+			r, err := o.GetID(umdl, oarg{oarg{"name", "=", name}})
+			o.checkErr(err)
+	
 			ur := map[string]interface{}{
 				"name":                  name,
 				"login":                 upn,
@@ -132,7 +134,7 @@ func (o *OdooConn) ResUsers() {
 				"tz":                    u.TZ,
 			}
 
-			o.Log.Infow(mdl, "model", umdl, "record", ur, "rid", r)
+			o.Log.Info(mdl, "model", umdl, "record", ur, "rid", r)
 
 			if r != 2 {
 				o.Record(umdl, r, ur)
@@ -147,7 +149,8 @@ func (o *OdooConn) ResUsers() {
 func (o *OdooConn) ResUsersMap() map[string]int {
 	mdl := "res_users"
 	umdl := strings.Replace(mdl, "_", ".", -1)
-	cc := o.SearchRead(umdl, oarg{}, 0, 0, []string{"name"})
+	cc, err := o.SearchRead(umdl, oarg{}, 0, 0, []string{"name"})
+	o.checkErr(err)
 	cids := map[string]int{}
 	for _, c := range cc {
 		cids[c["name"].(string)] = int(c["id"].(float64))

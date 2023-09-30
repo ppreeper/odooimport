@@ -17,7 +17,8 @@ func (o *OdooConn) ProductCategoryProduct1() {
 	sem := make(chan int, o.JobCount)
 	var wg sync.WaitGroup
 
-	saleableID := o.GetID(umdl, oarg{oarg{"name", "=", "Saleable"}})
+	saleableID, err := o.GetID(umdl, oarg{oarg{"name", "=", "Saleable"}})
+	o.checkErr(err)
 
 	type Group1 struct {
 		Group1 string `db:"group1"`
@@ -35,7 +36,7 @@ func (o *OdooConn) ProductCategoryProduct1() {
 	`
 
 	var rrg1 []Group1
-	err := o.DB.Select(&rrg1, stmt)
+	err = o.DB.Select(&rrg1, stmt)
 	o.checkErr(err)
 	recs := len(rrg1)
 	bar := progressbar.Default(int64(recs))
@@ -48,7 +49,8 @@ func (o *OdooConn) ProductCategoryProduct1() {
 			defer wg.Done()
 			sem <- 1
 
-			gid := o.GetID(umdl, oarg{oarg{"name", "=", v.Group1}})
+			gid, err := o.GetID(umdl, oarg{oarg{"name", "=", v.Group1}})
+			o.checkErr(err)
 
 			// Costing Method::property_cost_method
 			// Standard Price: standard
@@ -65,7 +67,7 @@ func (o *OdooConn) ProductCategoryProduct1() {
 				"property_cost_method": "average",
 				"property_valuation":   "real_time",
 			}
-			o.Log.Infow(mdl, "group", "group1", "model", umdl, "record", ur, "gid", gid)
+			o.Log.Info(mdl, "group", "group1", "model", umdl, "record", ur, "gid", gid)
 
 			o.Record(umdl, gid, ur)
 			// if gid == -1 {
@@ -97,7 +99,8 @@ func (o *OdooConn) ProductCategoryProduct2() {
 	sem := make(chan int, o.JobCount)
 	var wg sync.WaitGroup
 
-	saleableID := o.GetID(umdl, oarg{oarg{"name", "=", "Saleable"}})
+	saleableID, err := o.GetID(umdl, oarg{oarg{"name", "=", "Saleable"}})
+	o.checkErr(err)
 
 	type Group2 struct {
 		Group1 string `db:"group1"`
@@ -119,7 +122,7 @@ func (o *OdooConn) ProductCategoryProduct2() {
 	`
 
 	var rrg2 []Group2
-	err := o.DB.Select(&rrg2, stmt)
+	err = o.DB.Select(&rrg2, stmt)
 	o.checkErr(err)
 	recs := len(rrg2)
 	bar := progressbar.Default(int64(recs))
@@ -132,10 +135,12 @@ func (o *OdooConn) ProductCategoryProduct2() {
 			defer wg.Done()
 			sem <- 1
 
-			pid := o.GetID(umdl, oarg{oarg{"name", "=", v.Group1}, oarg{"parent_id", "=", saleableID}})
+			pid, err := o.GetID(umdl, oarg{oarg{"name", "=", v.Group1}, oarg{"parent_id", "=", saleableID}})
+			o.checkErr(err)
 			gid := -1
 			if pid != -1 {
-				gid = o.GetID(umdl, oarg{oarg{"name", "=", v.Group2}, oarg{"parent_id", "=", pid}})
+				gid, err = o.GetID(umdl, oarg{oarg{"name", "=", v.Group2}, oarg{"parent_id", "=", pid}})
+				o.checkErr(err)
 			}
 
 			// Costing Method::property_cost_method
@@ -153,7 +158,7 @@ func (o *OdooConn) ProductCategoryProduct2() {
 				"property_cost_method": "average",
 				"property_valuation":   "real_time",
 			}
-			o.Log.Infow(mdl, "group", "group2", "model", umdl, "record", ur, "gid", gid)
+			o.Log.Info(mdl, "group", "group2", "model", umdl, "record", ur, "gid", gid)
 
 			o.Record(umdl, gid, ur)
 
@@ -172,7 +177,8 @@ func (o *OdooConn) ProductCategoryProduct3() {
 	sem := make(chan int, o.JobCount)
 	var wg sync.WaitGroup
 
-	saleableID := o.GetID(umdl, oarg{oarg{"name", "=", "Saleable"}})
+	saleableID, err := o.GetID(umdl, oarg{oarg{"name", "=", "Saleable"}})
+	o.checkErr(err)
 
 	type Group3 struct {
 		Group1 string `db:"group1"`
@@ -197,7 +203,7 @@ func (o *OdooConn) ProductCategoryProduct3() {
 	`
 
 	var rrg3 []Group3
-	err := o.DB.Select(&rrg3, stmt)
+	err = o.DB.Select(&rrg3, stmt)
 	o.checkErr(err)
 	recs := len(rrg3)
 	bar := progressbar.Default(int64(recs))
@@ -210,14 +216,17 @@ func (o *OdooConn) ProductCategoryProduct3() {
 			defer wg.Done()
 			sem <- 1
 
-			pid := o.GetID(umdl, oarg{oarg{"name", "=", v.Group1}, oarg{"parent_id", "=", saleableID}})
+			pid, err := o.GetID(umdl, oarg{oarg{"name", "=", v.Group1}, oarg{"parent_id", "=", saleableID}})
+			o.checkErr(err)
 			sid := -1
 			if pid != -1 {
-				sid = o.GetID(umdl, oarg{oarg{"name", "=", v.Group2}, oarg{"parent_id", "=", pid}})
+				sid, err = o.GetID(umdl, oarg{oarg{"name", "=", v.Group2}, oarg{"parent_id", "=", pid}})
+				o.checkErr(err)
 			}
 			gid := -1
 			if sid != -1 {
-				gid = o.GetID(umdl, oarg{oarg{"name", "=", v.Group3}, oarg{"parent_id", "=", sid}})
+				gid, err = o.GetID(umdl, oarg{oarg{"name", "=", v.Group3}, oarg{"parent_id", "=", sid}})
+				o.checkErr(err)
 			}
 
 			// Costing Method::property_cost_method
@@ -235,7 +244,7 @@ func (o *OdooConn) ProductCategoryProduct3() {
 				"property_cost_method": "average",
 				"property_valuation":   "real_time",
 			}
-			o.Log.Infow(mdl, "group", "group3", "model", umdl, "record", ur, "gid", gid)
+			o.Log.Info(mdl, "group", "group3", "model", umdl, "record", ur, "gid", gid)
 
 			o.Record(umdl, gid, ur)
 
@@ -254,7 +263,8 @@ func (o *OdooConn) ProductCategoryProduct4() {
 	sem := make(chan int, o.JobCount)
 	var wg sync.WaitGroup
 
-	saleableID := o.GetID(umdl, oarg{oarg{"name", "=", "Saleable"}})
+	saleableID, err := o.GetID(umdl, oarg{oarg{"name", "=", "Saleable"}})
+	o.checkErr(err)
 
 	type MatGrp2 struct {
 		Matgrp    string `db:"matgrp"`
@@ -288,7 +298,7 @@ func (o *OdooConn) ProductCategoryProduct4() {
 	`
 
 	var mg2 []MatGrp2
-	err := o.DB.Select(&mg2, stmt)
+	err = o.DB.Select(&mg2, stmt)
 	o.checkErr(err)
 	recs := len(mg2)
 	bar := progressbar.Default(int64(recs))
@@ -301,14 +311,17 @@ func (o *OdooConn) ProductCategoryProduct4() {
 			defer wg.Done()
 			sem <- 1
 
-			pid := o.GetID(umdl, oarg{oarg{"name", "=", v.Group1}, oarg{"parent_id", "=", saleableID}})
+			pid, err := o.GetID(umdl, oarg{oarg{"name", "=", v.Group1}, oarg{"parent_id", "=", saleableID}})
+			o.checkErr(err)
 			sid := -1
 			if pid != -1 {
-				sid = o.GetID(umdl, oarg{oarg{"name", "=", v.Group2}, oarg{"parent_id", "=", pid}})
+				sid, err = o.GetID(umdl, oarg{oarg{"name", "=", v.Group2}, oarg{"parent_id", "=", pid}})
+				o.checkErr(err)
 			}
 			gid := -1
 			if sid != -1 {
-				gid = o.GetID(umdl, oarg{oarg{"name", "=", v.Matgrp}, oarg{"parent_id", "=", sid}})
+				gid, err = o.GetID(umdl, oarg{oarg{"name", "=", v.Matgrp}, oarg{"parent_id", "=", sid}})
+				o.checkErr(err)
 			}
 
 			// with buyerID modification
@@ -343,7 +356,7 @@ func (o *OdooConn) ProductCategoryProduct4() {
 			// 	ur["buyer_id"] = bid
 			// }
 
-			o.Log.Infow(mdl, "group", "matgrp2", "model", umdl, "record", ur, "gid", gid)
+			o.Log.Info(mdl, "group", "matgrp2", "model", umdl, "record", ur, "gid", gid)
 
 			o.Record(umdl, gid, ur)
 
@@ -362,7 +375,8 @@ func (o *OdooConn) ProductCategoryProduct5() {
 	sem := make(chan int, o.JobCount)
 	var wg sync.WaitGroup
 
-	saleableID := o.GetID(umdl, oarg{oarg{"name", "=", "Saleable"}})
+	saleableID, err := o.GetID(umdl, oarg{oarg{"name", "=", "Saleable"}})
+	o.checkErr(err)
 
 	type MatGrp3 struct {
 		Matgrp    string `db:"matgrp"`
@@ -399,7 +413,7 @@ func (o *OdooConn) ProductCategoryProduct5() {
 	`
 
 	var mg3 []MatGrp3
-	err := o.DB.Select(&mg3, stmt)
+	err = o.DB.Select(&mg3, stmt)
 	o.checkErr(err)
 	recs := len(mg3)
 	bar := progressbar.Default(int64(recs))
@@ -412,18 +426,22 @@ func (o *OdooConn) ProductCategoryProduct5() {
 			defer wg.Done()
 			sem <- 1
 
-			pid := o.GetID(umdl, oarg{oarg{"name", "=", v.Group1}, oarg{"parent_id", "=", saleableID}})
+			pid, err := o.GetID(umdl, oarg{oarg{"name", "=", v.Group1}, oarg{"parent_id", "=", saleableID}})
+			o.checkErr(err)
 			sid := -1
 			if pid != -1 {
-				sid = o.GetID(umdl, oarg{oarg{"name", "=", v.Group2}, oarg{"parent_id", "=", pid}})
+				sid, err = o.GetID(umdl, oarg{oarg{"name", "=", v.Group2}, oarg{"parent_id", "=", pid}})
+				o.checkErr(err)
 			}
 			tid := -1
 			if sid != -1 {
-				tid = o.GetID(umdl, oarg{oarg{"name", "=", v.Group3}, oarg{"parent_id", "=", sid}})
+				tid, err = o.GetID(umdl, oarg{oarg{"name", "=", v.Group3}, oarg{"parent_id", "=", sid}})
+				o.checkErr(err)
 			}
 			gid := -1
 			if tid != -1 {
-				gid = o.GetID(umdl, oarg{oarg{"name", "=", v.Matgrp}, oarg{"parent_id", "=", tid}})
+				gid, err = o.GetID(umdl, oarg{oarg{"name", "=", v.Matgrp}, oarg{"parent_id", "=", tid}})
+				o.checkErr(err)
 			}
 
 			// with buyerID modification
@@ -459,7 +477,7 @@ func (o *OdooConn) ProductCategoryProduct5() {
 			// 	ur["buyer_id"] = bid
 			// }
 
-			o.Log.Infow(mdl, "group", "matgrp3", "model", umdl, "record", ur, "gid", gid)
+			o.Log.Info(mdl, "group", "matgrp3", "model", umdl, "record", ur, "gid", gid)
 
 			o.Record(umdl, gid, ur)
 

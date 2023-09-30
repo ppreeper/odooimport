@@ -3,45 +3,39 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
+	"log/slog"
 	"os"
 	"strings"
 
 	"github.com/ppreeper/odooimport/database"
 	"github.com/ppreeper/odooimport/odooconn"
-	"go.uber.org/zap"
 )
 
-var (
-	log      *zap.SugaredLogger
-	errorLog *zap.SugaredLogger
-)
+var ilog *slog.Logger
 
 func main() {
-	log = setupLogging("import.log")
-	errorLog = setupLogging("error.log")
-	log.Info("odooimport start")
+	ilog = setupLogging("import.log")
+	ilog.Info("odooimport start")
 
 	// Flags
-	// Config File
-	var c Conf
-	c.getConf("config.yml")
-
-	var hostname, dbase, flags string
+	var config, flags string
 	jobCount := 8
 	var noUpdate bool
 
-	flag.StringVar(&hostname, "host", "odoocrm.arthomson.com", "odoo database")
-	flag.StringVar(&dbase, "d", "odoocrm", "odoo database")
+	flag.StringVar(&config, "c", "config.yml", "config file")
 	flag.StringVar(&flags, "f", "", "flags")
 	flag.IntVar(&jobCount, "j", 8, "job count")
 	flag.BoolVar(&noUpdate, "n", false, "no update")
 	flag.Parse()
-	fmt.Println(dbase)
-	if dbase == "" {
-		fmt.Println("no database specified")
-		os.Exit(1)
-	}
+
+	// Config File
+	var c Conf
+	c.getConf(config)
+	fmt.Println("config", c)
+
 	ff := strings.Split(flags, ",")
+	fmt.Println("flags", ff)
 
 	// connect to source database
 
@@ -74,13 +68,11 @@ func main() {
 		Database: dbase,
 		DB:       sdb,
 		NoUpdate: noUpdate,
-		Log:      log,
-		ErrLog:   errorLog,
+		Log:      ilog,
 		JobCount: jobCount,
 	})
 	// odoo login to get uid
-	err = o.Login()
-	checkErr(err)
+	checkErr(o.Login())
 
 	if flags != "" {
 		for _, v := range ff {
@@ -91,33 +83,31 @@ func main() {
 
 func checkErr(err error) {
 	if err != nil {
-		errorLog.Errorw(err.Error())
+		ilog.Error(err.Error())
 	}
 }
 
 func fatalErr(err error) {
 	if err != nil {
-		errorLog.Fatalw(err.Error())
+		ilog.Error(err.Error())
+		os.Exit(1)
 	}
 }
 
-func setupLogging(logName string) (log *zap.SugaredLogger) {
+func setupLogging(logName string) *slog.Logger {
+	// check for file existence
 	_, err := os.Stat(logName)
 	if os.IsNotExist(err) {
 		file, err := os.Create(logName)
 		fatalErr(err)
-		defer func() {
-			if err := file.Close(); err != nil {
-				fmt.Printf("Error closing file: %s\n", err)
-			}
-		}()
+		defer file.Close()
 	}
+	// if exists truncate file
 	err = os.Truncate(logName, 0)
 	checkErr(err)
-	// Logger Setup
-	cfg := zap.NewProductionConfig()
-	cfg.OutputPaths = []string{logName}
-	logger, _ := cfg.Build()
-	log = logger.Sugar()
-	return
+
+	f, err := os.OpenFile(logName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+	fatalErr(err)
+	logwriter := io.Writer(f)
+	return slog.New(slog.NewTextHandler(logwriter, nil))
 }

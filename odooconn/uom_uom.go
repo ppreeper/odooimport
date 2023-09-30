@@ -39,8 +39,10 @@ func (o *OdooConn) UomUom() {
 	for _, v := range uoms {
 		err := bar.Add(1)
 		o.checkErr(err)
-		r := o.GetID(umdl, oarg{oarg{"name", "=", v.Name}})
-		pr := o.GetID("uom.category", oarg{oarg{"name", "=", v.CategoryID}})
+		r, err := o.GetID(umdl, oarg{oarg{"name", "=", v.Name}})
+		o.checkErr(err)
+		pr, err := o.GetID("uom.category", oarg{oarg{"name", "=", v.CategoryID}})
+		o.checkErr(err)
 		ur := map[string]interface{}{
 			"name":        v.Name,
 			"category_id": pr,
@@ -48,7 +50,7 @@ func (o *OdooConn) UomUom() {
 			"uom_type":    v.UomType,
 			"rounding":    v.Rounding,
 		}
-		o.Log.Infow(mdl, "model", umdl, "record", ur, "r", r)
+		o.Log.Info(mdl, "model", umdl, "record", ur, "r", r)
 
 		o.Record(umdl, r, ur)
 	}
@@ -57,7 +59,8 @@ func (o *OdooConn) UomUom() {
 func (o *OdooConn) UomUomMap() map[string]int {
 	mdl := "uom_uom"
 	umdl := strings.Replace(mdl, "_", ".", -1)
-	cc := o.SearchRead(umdl, oarg{}, 0, 0, []string{"name"})
+	cc, err := o.SearchRead(umdl, oarg{}, 0, 0, []string{"name"})
+	o.checkErr(err)
 	cids := map[string]int{}
 	for _, c := range cc {
 		cids[c["name"].(string)] = int(c["id"].(float64))

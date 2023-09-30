@@ -75,13 +75,16 @@ func (o *OdooConn) ResPartnerVendors() {
 			defer wg.Done()
 			sem <- 1
 
-			o.Log.Infow(umdl, "v", v)
+			o.Log.Info(umdl, "v", v)
 
-			r := o.GetID(umdl, oarg{oarg{"name", "=", v.Name}, oarg{"ref", "=", v.Ref}})
+			r, err := o.GetID(umdl, oarg{oarg{"name", "=", v.Name}, oarg{"ref", "=", v.Ref}})
+			o.checkErr(err)
 			payterm := payterms[v.PayTerm]
 
-			cid := o.CountryID(v.Country)
-			sid := o.StateID(cid, v.State)
+			cid, err := o.CountryID(v.Country)
+			o.checkErr(err)
+			sid, err := o.StateID(cid, v.State)
+			o.checkErr(err)
 			// currencyID := o.GetID("res.currency", oarg{oarg{"name", "=", v.OrderCurrency}})
 			currencyID := currs[v.OrderCurrency]
 
@@ -107,14 +110,16 @@ func (o *OdooConn) ResPartnerVendors() {
 				ur["state_id"] = sid
 			}
 			if v.Country == "Canada" {
-				fiscalPositionID := o.GetID("account.fiscal.position", oarg{oarg{"name", "like", v.State}, oarg{"country_id", "=", cid}})
+				fiscalPositionID, err := o.GetID("account.fiscal.position", oarg{oarg{"name", "like", v.State}, oarg{"country_id", "=", cid}})
+				o.checkErr(err)
 				ur["property_account_position_id"] = fiscalPositionID
 			} else {
-				fiscalPositionID := o.GetID("account.fiscal.position", oarg{oarg{"name", "like", "International"}})
+				fiscalPositionID, err := o.GetID("account.fiscal.position", oarg{oarg{"name", "like", "International"}})
+				o.checkErr(err)
 				ur["property_account_position_id"] = fiscalPositionID
 			}
 
-			o.Log.Infow(umdl, "record", ur, "r", r)
+			o.Log.Info(umdl, "record", ur, "r", r)
 
 			o.Record(umdl, r, ur)
 
@@ -190,16 +195,20 @@ func (o *OdooConn) ResPartnerVendorsLink() {
 			defer wg.Done()
 			sem <- 1
 
-			o.Log.Infow(umdl, "v", v)
+			o.Log.Info(umdl, "v", v)
 
-			r := o.GetID(umdl, oarg{oarg{"name", "=", v.Name}, oarg{"ref", "=", v.Ref}})
+			r, err := o.GetID(umdl, oarg{oarg{"name", "=", v.Name}, oarg{"ref", "=", v.Ref}})
+			o.checkErr(err)
 			payterm := payterms[v.PayTerm]
 			// currencyID := o.GetID("res.currency", oarg{oarg{"name", "=", v.OrderCurrency}})
 			currencyID := currs[v.OrderCurrency]
 
-			pid := o.GetID(umdl, oarg{oarg{"ref", "=", v.VParent}})
-			cid := o.CountryID(v.Country)
-			sid := o.StateID(cid, v.State)
+			pid, err := o.GetID(umdl, oarg{oarg{"ref", "=", v.VParent}})
+			o.checkErr(err)
+			cid, err := o.CountryID(v.Country)
+			o.checkErr(err)
+			sid, err := o.StateID(cid, v.State)
+			o.checkErr(err)
 
 			ur := map[string]interface{}{
 				"name":                              v.Name,
@@ -223,14 +232,16 @@ func (o *OdooConn) ResPartnerVendorsLink() {
 				ur["state_id"] = sid
 			}
 			if v.Country == "Canada" {
-				fiscalPositionID := o.GetID("account.fiscal.position", oarg{oarg{"name", "like", v.State}, oarg{"country_id", "=", cid}})
+				fiscalPositionID, err := o.GetID("account.fiscal.position", oarg{oarg{"name", "like", v.State}, oarg{"country_id", "=", cid}})
+				o.checkErr(err)
 				ur["property_account_position_id"] = fiscalPositionID
 			} else {
-				fiscalPositionID := o.GetID("account.fiscal.position", oarg{oarg{"name", "like", "International"}})
+				fiscalPositionID, err := o.GetID("account.fiscal.position", oarg{oarg{"name", "like", "International"}})
+				o.checkErr(err)
 				ur["property_account_position_id"] = fiscalPositionID
 			}
 
-			o.Log.Infow(umdl, "record", ur, "r", r)
+			o.Log.Info(umdl, "record", ur, "r", r)
 
 			o.Record(umdl, r, ur)
 
@@ -283,9 +294,12 @@ func (o *OdooConn) ResPartnerVendorsDelpro() {
 			defer wg.Done()
 			sem <- 1
 
-			r := o.GetID(umdl, oarg{oarg{"name", "=", v.Name}, oarg{"ref", "=", v.Ref}})
-			cid := o.CountryID(v.Country)
-			sid := o.StateID(cid, v.State)
+			r, err := o.GetID(umdl, oarg{oarg{"name", "=", v.Name}, oarg{"ref", "=", v.Ref}})
+			o.checkErr(err)
+			cid, err := o.CountryID(v.Country)
+			o.checkErr(err)
+			sid, err := o.StateID(cid, v.State)
+			o.checkErr(err)
 			ur := map[string]interface{}{
 				"name":       v.Name,
 				"ref":        v.Ref,
@@ -300,7 +314,7 @@ func (o *OdooConn) ResPartnerVendorsDelpro() {
 			if sid != -1 {
 				ur["state_id"] = sid
 			}
-			o.Log.Infow(mdl, "model", umdl, "record", ur, "r", r)
+			o.Log.Info(mdl, "model", umdl, "record", ur, "r", r)
 
 			o.Record(umdl, r, ur)
 

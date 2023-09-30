@@ -61,7 +61,7 @@ func (o *OdooConn) ProductSupplierinfo(ptfilt string) {
 	} else {
 		companyID = cids["A.R. Thomson Group"]
 	}
-	o.Log.Info(companyID, recs)
+	o.Log.Info("", "companyID", companyID, "recs", recs)
 
 	curr := o.ResCurrencyMap()
 
@@ -76,7 +76,7 @@ func (o *OdooConn) ProductSupplierinfo(ptfilt string) {
 			defer wg.Done()
 			sem <- 1
 
-			o.Log.Infow(umdl, "v", v)
+			o.Log.Info(umdl, "v", v)
 
 			// currencyID := o.GetID("res.currency", oarg{oarg{"name", "=", v.Currency}})
 			currencyID := curr[v.Currency]
@@ -88,18 +88,21 @@ func (o *OdooConn) ProductSupplierinfo(ptfilt string) {
 			o.checkErr(err)
 			dateEnd := t.Format("2006-01-02")
 
-			vendorID := o.GetID("res.partner", oarg{oarg{"ref", "=", v.Vendorno}})
+			vendorID, err := o.GetID("res.partner", oarg{oarg{"ref", "=", v.Vendorno}})
+			o.checkErr(err)
 
 			// vendor := o.SearchRead("res.partner", oarg{oarg{"ref", "=", v.Vendorno}}, 0, 0, []string{"name"})
 			// vendorName := vendor[0]["name"].(string)
 			// // fmt.Println(vendorName)
 			// o.Log.Info("vendorName:", vendorName)
 
-			prodTmplID := o.GetID("product.template", oarg{oarg{"default_code", "=", v.Matnr}})
+			prodTmplID, err := o.GetID("product.template", oarg{oarg{"default_code", "=", v.Matnr}})
+			o.checkErr(err)
 
-			pUOM := o.GetID("uom.uom", oarg{oarg{"name", "=", v.UOM}})
+			pUOM, err := o.GetID("uom.uom", oarg{oarg{"name", "=", v.UOM}})
+			o.checkErr(err)
 
-			r := o.GetID(umdl,
+			r, err := o.GetID(umdl,
 				oarg{
 					oarg{"currency_id", "=", currencyID},
 					oarg{"date_end", "=", dateEnd},
@@ -109,6 +112,7 @@ func (o *OdooConn) ProductSupplierinfo(ptfilt string) {
 					// oarg{"product_uom", "=", pUOM},
 				},
 			)
+			o.checkErr(err)
 
 			ur := map[string]interface{}{
 				"company_id":      companyID,
@@ -122,7 +126,7 @@ func (o *OdooConn) ProductSupplierinfo(ptfilt string) {
 				"product_tmpl_id": prodTmplID,
 				"product_uom":     pUOM,
 			}
-			o.Log.Infow(umdl, "ur", ur, "r", r)
+			o.Log.Info(umdl, "ur", ur, "r", r)
 
 			o.Record(umdl, r, ur)
 
@@ -174,10 +178,14 @@ func (o *OdooConn) ProductSupplierinfoTopParts() {
 		err := bar.Add(1)
 		o.checkErr(err)
 
-		vendorID := o.GetID("res.partner", oarg{oarg{"ref", "=", v.Vendorno}})
-		currencyID := o.GetID("res.currency", oarg{oarg{"name", "=", v.Currency}})
-		prodTmplID := o.GetID("product.template", oarg{oarg{"default_code", "=", v.Matnr}})
-		r := o.GetID(umdl, oarg{oarg{"name", "=", vendorID}, oarg{"currency_id", "=", currencyID}, oarg{"product_tmpl_id", "=", prodTmplID}})
+		vendorID, err := o.GetID("res.partner", oarg{oarg{"ref", "=", v.Vendorno}})
+		o.checkErr(err)
+		currencyID, err := o.GetID("res.currency", oarg{oarg{"name", "=", v.Currency}})
+		o.checkErr(err)
+		prodTmplID, err := o.GetID("product.template", oarg{oarg{"default_code", "=", v.Matnr}})
+		o.checkErr(err)
+		r, err := o.GetID(umdl, oarg{oarg{"name", "=", vendorID}, oarg{"currency_id", "=", currencyID}, oarg{"product_tmpl_id", "=", prodTmplID}})
+		o.checkErr(err)
 		t, err := time.Parse("20060102", v.DateStart)
 		o.checkErr(err)
 		dateStart := t.Format("2006-01-02")
@@ -195,7 +203,7 @@ func (o *OdooConn) ProductSupplierinfoTopParts() {
 			"product_tmpl_id": prodTmplID,
 			"delay":           v.Delay,
 		}
-		o.Log.Infow(mdl, "model", umdl, "record", ur)
+		o.Log.Info(mdl, "model", umdl, "record", ur)
 
 		o.Record(umdl, r, ur)
 	}

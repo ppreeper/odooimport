@@ -54,15 +54,17 @@ func (o *OdooConn) PricelistPricegroup() {
 			defer wg.Done()
 			sem <- 1
 
-			curid := o.GetID("res.currency", oarg{oarg{"name", "=", p.Currency}})
-			r := o.GetID(umdl, oarg{oarg{"name", "=", p.Name}, oarg{"currency_id", "=", curid}})
+			curid, err := o.GetID("res.currency", oarg{oarg{"name", "=", p.Currency}})
+			o.checkErr(err)
+			r, err := o.GetID(umdl, oarg{oarg{"name", "=", p.Name}, oarg{"currency_id", "=", curid}})
+			o.checkErr(err)
 
 			ur := map[string]interface{}{
 				"name":        p.Name,
 				"currency_id": curid,
 			}
 
-			o.Log.Infow(umdl, "ur", ur, "r", r)
+			o.Log.Info(umdl, "ur", ur, "r", r)
 
 			o.Record(umdl, r, ur)
 
@@ -171,13 +173,14 @@ func (o *OdooConn) PricelistCustomer() {
 			defer wg.Done()
 			sem <- 1
 
-			r := o.GetID(umdl, oarg{oarg{"name", "like", p.Name}})
+			r, err := o.GetID(umdl, oarg{oarg{"name", "like", p.Name}})
+			o.checkErr(err)
 
 			ur := map[string]interface{}{
 				"name": p.Name,
 			}
 
-			o.Log.Infow(umdl, "ur", ur, "rid", r)
+			o.Log.Info(umdl, "ur", ur, "rid", r)
 
 			o.Record(umdl, r, ur)
 
@@ -222,16 +225,18 @@ func (o *OdooConn) ProductPricelist() {
 			defer bar.Add(1)
 			defer wg.Done()
 			sem <- 1
-			cid := o.CompanyID(v.Company)
+			cid, err := o.CompanyID(v.Company)
+			o.checkErr(err)
 			// curid := o.GetID("res.currency", oarg{oarg{"name", "=", v.Currency}})
 			curid := curr[v.Currency]
-			r := o.GetID(umdl, oarg{oarg{"name", "=", v.Name}, oarg{"currency_id", "=", curid}, oarg{"company_id", "=", cid}})
+			r, err := o.GetID(umdl, oarg{oarg{"name", "=", v.Name}, oarg{"currency_id", "=", curid}, oarg{"company_id", "=", cid}})
+			o.checkErr(err)
 			ur := map[string]interface{}{
 				"name":        v.Name,
 				"currency_id": curid,
 				"company_id":  cid,
 			}
-			o.Log.Infow(mdl, "model", umdl, "record", ur, "r", r)
+			o.Log.Info(mdl, "model", umdl, "record", ur, "r", r)
 
 			o.Record(umdl, r, ur)
 
@@ -244,7 +249,8 @@ func (o *OdooConn) ProductPricelist() {
 func (o *OdooConn) ProductPricelistMap() map[string]int {
 	mdl := "product_pricelist"
 	umdl := strings.Replace(mdl, "_", ".", -1)
-	cc := o.SearchRead(umdl, oarg{}, 0, 0, []string{"name"})
+	cc, err := o.SearchRead(umdl, oarg{}, 0, 0, []string{"name"})
+	o.checkErr(err)
 	cids := map[string]int{}
 	for _, c := range cc {
 		cids[c["name"].(string)] = int(c["id"].(float64))

@@ -58,27 +58,36 @@ func (o *OdooConn) StockWarehouse() {
 			defer wg.Done()
 			sem <- 1
 
-			cid := o.GetID("res.company", oarg{oarg{"name", "=", v.Company}, oarg{"city", "=", v.City}})
-			pid := o.GetID("res.partner", oarg{oarg{"name", "=", v.Pname}, oarg{"city", "=", v.City}})
-			r := o.GetID(umdl, oarg{oarg{"company_id", "=", cid}, oarg{"partner_id", "=", pid}})
+			cid, err := o.GetID("res.company", oarg{oarg{"name", "=", v.Company}, oarg{"city", "=", v.City}})
+			o.checkErr(err)
+			pid, err := o.GetID("res.partner", oarg{oarg{"name", "=", v.Pname}, oarg{"city", "=", v.City}})
+			o.checkErr(err)
+			r, err := o.GetID(umdl, oarg{oarg{"company_id", "=", cid}, oarg{"partner_id", "=", pid}})
+			o.checkErr(err)
 
 			switch v.Pprefix {
 			case "ARSUR":
 				r = 1
 			case "ARMTL":
-				r = o.GetID(umdl, oarg{oarg{"name", "=", v.Company}})
+				r, err = o.GetID(umdl, oarg{oarg{"name", "=", v.Company}})
+				o.checkErr(err)
 				if r == -1 {
-					r = o.GetID(umdl, oarg{oarg{"code", "=", v.Pprefix}})
+					r, err = o.GetID(umdl, oarg{oarg{"code", "=", v.Pprefix}})
+					o.checkErr(err)
 				}
 			case "DASUR":
-				r = o.GetID(umdl, oarg{oarg{"name", "=", v.Company}})
+				r, err = o.GetID(umdl, oarg{oarg{"name", "=", v.Company}})
+				o.checkErr(err)
 				if r == -1 {
-					r = o.GetID(umdl, oarg{oarg{"code", "=", v.Pprefix}})
+					r, err = o.GetID(umdl, oarg{oarg{"code", "=", v.Pprefix}})
+					o.checkErr(err)
 				}
 			case "DTSUR":
-				r = o.GetID(umdl, oarg{oarg{"name", "=", v.Company}})
+				r, err = o.GetID(umdl, oarg{oarg{"name", "=", v.Company}})
+				o.checkErr(err)
 				if r == -1 {
-					r = o.GetID(umdl, oarg{oarg{"code", "=", v.Pprefix}})
+					r, err = o.GetID(umdl, oarg{oarg{"code", "=", v.Pprefix}})
+					o.checkErr(err)
 				}
 			}
 
@@ -88,7 +97,7 @@ func (o *OdooConn) StockWarehouse() {
 				"company_id": cid,
 				"partner_id": pid,
 			}
-			o.Log.Infow(mdl, "##### model", umdl, "record", ur, "r", r)
+			o.Log.Info(mdl, "##### model", umdl, "record", ur, "r", r)
 
 			o.Record(umdl, r, ur)
 

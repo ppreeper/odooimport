@@ -26,7 +26,9 @@ func (o *OdooConn) AccountAccountUnlink() {
 	err := o.DB.Select(&dbrecs, stmt)
 	o.checkErr(err)
 
-	odoorecs := o.SearchRead(umdl, oarg{}, 0, 0, []string{"code"})
+	odoorecs, err := o.SearchRead(umdl, oarg{}, 0, 0, []string{"code"})
+	o.checkErr(err)
+
 	fmt.Println("accounts:", len(odoorecs))
 
 	// ids := []int{}
@@ -67,7 +69,8 @@ func (o *OdooConn) AccountAccount() {
 	recs := len(dbrecs)
 	bar := progressbar.Default(int64(recs))
 	for _, v := range dbrecs {
-		r := o.GetID(umdl, oarg{oarg{"code", "=", v.Code}})
+		r, err := o.GetID(umdl, oarg{oarg{"code", "=", v.Code}})
+		o.checkErr(err)
 
 		typeID := ats[v.Atype]
 
@@ -78,7 +81,7 @@ func (o *OdooConn) AccountAccount() {
 			"reconcile":    v.Reconcile,
 		}
 
-		o.Log.Debugw(umdl, "ur", ur, "r", r)
+		o.Log.Debug(umdl, "ur", ur, "r", r)
 
 		o.Record(umdl, r, ur)
 

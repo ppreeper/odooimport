@@ -34,23 +34,27 @@ func (o *OdooConn) HREmployee() {
 			sem <- 1
 			// fmt.Println(u)
 
-			o.Log.Infow("", "user", u.CN, "office", u.PhysicalDeliveryOfficeName)
+			o.Log.Info("", "user", u.CN, "office", u.PhysicalDeliveryOfficeName)
 			cid := cids[u.Company]
 
 			name := u.CN
 			// office := u.PhysicalDeliveryOfficeName
 			// fmt.Println(name, office, u.Department)
 
-			resPartnerID := o.GetID("res.partner", oarg{oarg{"name", "=", name}})
-			resUserID := o.GetID("res.users", oarg{oarg{"partner_id", "=", resPartnerID}, oarg{"company_id", "=", cid}})
+			resPartnerID, err := o.GetID("res.partner", oarg{oarg{"name", "=", name}})
+			o.checkErr(err)
+			resUserID, err := o.GetID("res.users", oarg{oarg{"partner_id", "=", resPartnerID}, oarg{"company_id", "=", cid}})
+			o.checkErr(err)
 			// fmt.Println(resPartnerID, resUserID)
 
-			user := o.SearchRead("res.partner", oarg{oarg{"id", "=", resPartnerID}}, 0, 1, []string{"parent_id"})
+			user, err := o.SearchRead("res.partner", oarg{oarg{"id", "=", resPartnerID}}, 0, 1, []string{"parent_id"})
+			o.checkErr(err)
 			// fmt.Println(user)
 
 			p := user[0]["parent_id"].([]interface{})
 			parentID := int(p[0].(float64))
-			departmentID := o.GetID("hr.department", oarg{oarg{"name", "=", u.Department}, oarg{"company_id", "=", cid}})
+			departmentID, err := o.GetID("hr.department", oarg{oarg{"name", "=", u.Department}, oarg{"company_id", "=", cid}})
+			o.checkErr(err)
 
 			// manager := ""
 			// if u.Manager != "" {
@@ -60,7 +64,8 @@ func (o *OdooConn) HREmployee() {
 			// }
 			// managerID := o.GetID(umdl, oarg{oarg{"name", "=", manager}})
 
-			r := o.GetID(umdl, oarg{oarg{"name", "=", name}, oarg{"company_id", "=", cid}})
+			r, err := o.GetID(umdl, oarg{oarg{"name", "=", name}, oarg{"company_id", "=", cid}})
+			o.checkErr(err)
 
 			ur := map[string]interface{}{
 				"name":       name,
@@ -77,7 +82,7 @@ func (o *OdooConn) HREmployee() {
 			// 	ur["parent_id"] = managerID
 			// }
 
-			o.Log.Infow(umdl, "record", ur, "r", r)
+			o.Log.Info(umdl, "record", ur, "r", r)
 
 			o.Record(umdl, r, ur)
 
@@ -113,7 +118,8 @@ func (o *OdooConn) HREmployeeManager() {
 
 			cid := cids[u.Company]
 			name := u.CN
-			r := o.GetID(umdl, oarg{oarg{"name", "=", name}, oarg{"company_id", "=", cid}})
+			r, err := o.GetID(umdl, oarg{oarg{"name", "=", name}, oarg{"company_id", "=", cid}})
+			o.checkErr(err)
 
 			manager := ""
 			if u.Manager != "" {
@@ -121,13 +127,14 @@ func (o *OdooConn) HREmployeeManager() {
 				m := strings.Split(mcn[0], "=")
 				manager = m[1]
 			}
-			managerID := o.GetID(umdl, oarg{oarg{"name", "=", manager}})
+			managerID, err := o.GetID(umdl, oarg{oarg{"name", "=", manager}})
+			o.checkErr(err)
 
 			ur := map[string]interface{}{}
 
 			if manager != "" {
 				ur["parent_id"] = managerID
-				o.Log.Infow(umdl, "record", ur, "r", r)
+				o.Log.Info(umdl, "record", ur, "r", r)
 				o.Record(umdl, r, ur)
 			}
 

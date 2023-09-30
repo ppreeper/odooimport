@@ -39,7 +39,8 @@ func (o *OdooConn) ResCompanyLDAP(cid int) {
 
 	for _, v := range rr {
 		if v.CompanyID == cid {
-			r := o.GetID(umdl, oarg{oarg{"company", "=", cid}, oarg{"sequence", "=", v.Sequence}})
+			r, err := o.GetID(umdl, oarg{oarg{"company", "=", cid}, oarg{"sequence", "=", v.Sequence}})
+			o.checkErr(err)
 			ur := map[string]interface{}{
 				"sequence":         v.Sequence,
 				"company":          cid,
@@ -52,7 +53,7 @@ func (o *OdooConn) ResCompanyLDAP(cid int) {
 				"ldap_tls":         v.LdapTLS,
 				"create_user":      v.CreateUser,
 			}
-			o.Log.Infow(mdl, "model", umdl, "record", ur, "r", r)
+			o.Log.Info(mdl, "model", umdl, "record", ur, "r", r)
 
 			o.Record(umdl, r, ur)
 

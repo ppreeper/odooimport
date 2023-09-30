@@ -17,9 +17,9 @@ func (o *OdooConn) ProductCategoryDelpro() {
 	sem := make(chan int, o.JobCount)
 	var wg sync.WaitGroup
 
-	saleableID := o.GetID(umdl, oarg{oarg{"name", "=", "Saleable"}})
+	saleableID, err := o.GetID(umdl, oarg{oarg{"name", "=", "Saleable"}})
+	o.checkErr(err)
 
-	//////////
 	// not consumables
 	stmt := `
 	select distinct
@@ -40,7 +40,7 @@ func (o *OdooConn) ProductCategoryDelpro() {
 	}
 
 	var mgc []MatCat
-	err := o.DB.Select(&mgc, stmt)
+	err = o.DB.Select(&mgc, stmt)
 	o.checkErr(err)
 	recs := len(mgc)
 	bar := progressbar.Default(int64(recs))
@@ -53,7 +53,8 @@ func (o *OdooConn) ProductCategoryDelpro() {
 			defer wg.Done()
 			sem <- 1
 
-			gid := o.GetID(umdl, oarg{oarg{"name", "=", v.Ptype}, oarg{"parent_id", "=", saleableID}})
+			gid, err := o.GetID(umdl, oarg{oarg{"name", "=", v.Ptype}, oarg{"parent_id", "=", saleableID}})
+			o.checkErr(err)
 
 			ur := map[string]interface{}{
 				"name":                 v.Ptype,
@@ -62,7 +63,7 @@ func (o *OdooConn) ProductCategoryDelpro() {
 				"property_valuation":   "real_time",
 			}
 
-			o.Log.Infow(mdl, "group", "matgrp3", "model", umdl, "record", ur, "gid", gid)
+			o.Log.Info(mdl, "group", "matgrp3", "model", umdl, "record", ur, "gid", gid)
 
 			o.Record(umdl, gid, ur)
 			// if gid == -1 {
@@ -120,11 +121,15 @@ func (o *OdooConn) ProductCategoryDelpro() {
 			defer wg.Done()
 			sem <- 1
 
-			pid := o.GetID(umdl, oarg{oarg{"name", "=", v.Ptype}, oarg{"parent_id", "=", saleableID}})
-			gid := o.GetID(umdl, oarg{oarg{"name", "=", v.Brand}, oarg{"parent_id", "=", pid}})
+			pid, err := o.GetID(umdl, oarg{oarg{"name", "=", v.Ptype}, oarg{"parent_id", "=", saleableID}})
+			o.checkErr(err)
+			gid, err := o.GetID(umdl, oarg{oarg{"name", "=", v.Brand}, oarg{"parent_id", "=", pid}})
+			o.checkErr(err)
 
-			bidPartner := o.GetID("res.partner", oarg{oarg{"name", "=", v.Buyer}})
-			bid := o.GetID("res.users", oarg{oarg{"partner_id", "=", bidPartner}})
+			bidPartner, err := o.GetID("res.partner", oarg{oarg{"name", "=", v.Buyer}})
+			o.checkErr(err)
+			bid, err := o.GetID("res.users", oarg{oarg{"partner_id", "=", bidPartner}})
+			o.checkErr(err)
 
 			ur := map[string]interface{}{
 				"name":                 v.Brand,
@@ -141,7 +146,7 @@ func (o *OdooConn) ProductCategoryDelpro() {
 				ur["buyer_id"] = bid
 			}
 
-			o.Log.Infow(umdl, "record", ur, "parent_id", pid, "gid", gid)
+			o.Log.Info(umdl, "record", ur, "parent_id", pid, "gid", gid)
 
 			o.Record(umdl, gid, ur)
 
